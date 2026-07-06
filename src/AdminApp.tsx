@@ -4493,7 +4493,6 @@ function AdminManageAllArticlesPanel({
                     <tr>
                       <th className="w-16 px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700">S No</th>
                       <th className="w-48 px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700">Author Name</th>
-                      <th className="w-56 px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700">Email</th>
                       <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700">Title</th>
                       <th className="w-64 px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700">Submitted Manuscript</th>
                       <th className="w-36 px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-700">Submission Date</th>
@@ -4512,7 +4511,6 @@ function AdminManageAllArticlesPanel({
                           <tr key={String(entry.article_id ?? entry.manuscript_id)} className="border-t border-slate-200/80 align-top odd:bg-white even:bg-slate-50/45">
                             <td className="px-4 py-3 text-slate-700">{index + 1}</td>
                             <td className="px-4 py-3 text-slate-700 font-medium break-words">{String(entry.author_name ?? "Unknown")}</td>
-                            <td className="px-4 py-3 text-slate-600 break-all">{String(entry.author_email ?? "—")}</td>
                             <td className="px-4 py-3 text-slate-900 font-semibold break-words">{String(entry.title ?? entry.manuscript_id)}</td>
                             <td className="px-4 py-3">
                               <ManuscriptFileBundlePreview value={entry.file_bundle} compact emptyMessage="No files" />
@@ -4573,7 +4571,7 @@ function AdminManageAllArticlesPanel({
                       })
                     ) : (
                       <tr>
-                        <td colSpan={8} className="px-4 py-8 text-center text-sm text-slate-500">
+                        <td colSpan={7} className="px-4 py-8 text-center text-sm text-slate-500">
                           {filterType === "unpaid_submitted" ? "No newly submitted unpaid manuscripts found." : "No manuscripts found."}
                         </td>
                       </tr>

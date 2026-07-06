@@ -32,3 +32,6 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./dist/  # Use ./build/ if you are using Create React App instead of Vite
         server-dir: ./  # Change this to your specific Bluehost folder if needed
+        exclude: |
+          **/uploads/**
+          **/uploads
