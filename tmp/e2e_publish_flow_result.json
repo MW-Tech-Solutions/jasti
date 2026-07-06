@@ -1,0 +1,52 @@
+{
+  "accounts": {
+    "author": {
+      "user_id": 39,
+      "email": "author.2vpiq5@example.com",
+      "password": "TestPass123!",
+      "roles": [
+        "author"
+      ]
+    },
+    "reviewer": {
+      "user_id": 40,
+      "email": "reviewer.vb4h82@example.com",
+      "password": "TestPass123!",
+      "roles": [
+        "reviewer"
+      ]
+    },
+    "editor": {
+      "user_id": 41,
+      "email": "editor.ei99vc@example.com",
+      "password": "TestPass123!",
+      "roles": [
+        "editor",
+        "section_editor"
+      ]
+    },
+    "chief": {
+      "user_id": 42,
+      "email": "chief.nrf97p@example.com",
+      "password": "TestPass123!",
+      "roles": [
+        "editor_in_chief"
+      ]
+    }
+  },
+  "manuscript": {
+    "manuscript_id": 9,
+    "reference_number": "JASTI-080323449",
+    "status": "published",
+    "title": "E2E Publish Flow Manuscript u1l5gl"
+  },
+  "article": {
+    "article_id": 7,
+    "title": "E2E Publish Flow Manuscript u1l5gl",
+    "doi": "10.0000/ajasti.9",
+    "publication_date": "2026-03-26",
+    "public_detail_url": "http://localhost/ajasti/articles/7",
+    "public_api_url": "http://localhost/ajasti/api/public/article.php?article_id=7",
+    "listed_publicly": true
+  }
+}
