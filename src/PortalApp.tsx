@@ -953,12 +953,12 @@ export default function PortalApp({ onAuthenticated, page = "portal" }: PortalAp
 	                  <div className="relative mb-2 min-h-8 sm:mb-3">
 	                    <Link
 	                      to="/"
-	                      className={cn(authBackLinkClassName, "absolute left-0 top-0")}
+	                      className={cn(authBackLinkClassName, "absolute left-0 top-0 z-10")}
 	                    >
 	                      <ArrowLeft className="h-3 w-3" />
 	                      {authBackLinkLabel}
 	                    </Link>
-	                    <p className={cn(authEyebrowClassName, "absolute inset-x-0 top-1/2 -translate-y-1/2 text-center")}>JASTI PORTAL</p>
+	                    <p className={cn(authEyebrowClassName, "absolute inset-x-0 top-1/2 -translate-y-1/2 text-center pointer-events-none")}>JASTI PORTAL</p>
 	                  </div>
 
 		                  <div className="mt-2 flex justify-center">
@@ -1146,12 +1146,12 @@ export default function PortalApp({ onAuthenticated, page = "portal" }: PortalAp
 		                    <div className="relative mb-2 min-h-8 sm:mb-3">
 		                      <Link
 		                        to="/"
-		                        className={cn(authBackLinkClassName, "absolute left-0 top-0")}
+		                        className={cn(authBackLinkClassName, "absolute left-0 top-0 z-10")}
 		                      >
 		                        <ArrowLeft className="h-3 w-3" />
 		                        {authBackLinkLabel}
 		                      </Link>
-		                      <p className={cn(authEyebrowClassName, "absolute inset-x-0 top-1/2 -translate-y-1/2 text-center")}>JASTI PORTAL</p>
+		                      <p className={cn(authEyebrowClassName, "absolute inset-x-0 top-1/2 -translate-y-1/2 text-center pointer-events-none")}>JASTI PORTAL</p>
 		                    </div>
 	                    <div className="mt-2 flex justify-center">
                       <div className={authLogoFrameClassName}>

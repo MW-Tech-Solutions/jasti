@@ -224,6 +224,12 @@ export const workspaceConfigs: WorkspaceRoleConfig[] = [
         checklist: ['Search articles', 'Edit publication metadata', 'Delete article records'],
       },
       {
+        id: 'view-submitted-articles',
+        label: 'View Submitted Article',
+        description: 'View newly submitted articles that do not pay a fee.',
+        checklist: ['Review newly submitted articles', 'Verify submission status'],
+      },
+      {
         id: 'board',
         label: 'Editorial Board Management',
         description: 'Manage editor and reviewer appointments and track performance.',

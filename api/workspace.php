@@ -684,6 +684,24 @@ if (in_array('editor_in_chief', $roles, true)) {
          ORDER BY cf.submitted_at DESC'
     )->fetchAll();
 
+    $manuscripts = $pdo->query(
+        'SELECT m.manuscript_id, m.title, m.scope_area, m.reference_number, m.status, m.article_type, m.plagiarism_score, m.submission_date,
+                a.article_id, a.publication_date, COALESCE(a.archived, 0) AS archived, a.archived_at,
+                CONCAT(COALESCE(u.first_name, ""), " ", COALESCE(u.last_name, "")) AS author_name,
+                u.email AS author_email,
+                (SELECT GROUP_CONCAT(CONCAT(mf.file_type, ": ", mf.file_path) SEPARATOR " || ") FROM manuscript_files mf WHERE mf.manuscript_id = m.manuscript_id) AS file_bundle,
+                EXISTS(
+                    SELECT 1 FROM manuscript_payments mp
+                    WHERE mp.manuscript_id = m.manuscript_id
+                      AND mp.payment_status IN ("confirmed", "reviewed")
+                      AND mp.amount >= ' . (int) jasti_submission_screening_payment_amount() . '
+                ) AS submission_payment_confirmed
+         FROM manuscripts m
+         LEFT JOIN articles a ON a.manuscript_id = m.manuscript_id
+         LEFT JOIN users u ON u.user_id = m.corresponding_author_id
+         ORDER BY m.submission_date DESC'
+    )->fetchAll();
+
     $data['editor_in_chief'] = [
         'overview' => $overview ?: [],
         'editor_decisions' => $editorDecisions,
@@ -693,6 +711,7 @@ if (in_array('editor_in_chief', $roles, true)) {
         'users' => jasti_users_with_roles($pdo),
         'payments' => $paymentQueue,
         'copyright_forms' => $copyrightQueue,
+        'manuscripts' => $manuscripts,
     ];
 }
 
@@ -703,7 +722,14 @@ if (in_array('admin', $roles, true)) {
         'SELECT m.manuscript_id, m.title, m.scope_area, m.reference_number, m.status, m.article_type, m.plagiarism_score, m.submission_date,
                 a.article_id, a.publication_date, COALESCE(a.archived, 0) AS archived, a.archived_at,
                 CONCAT(COALESCE(u.first_name, ""), " ", COALESCE(u.last_name, "")) AS author_name,
-                u.email AS author_email
+                u.email AS author_email,
+                (SELECT GROUP_CONCAT(CONCAT(mf.file_type, ": ", mf.file_path) SEPARATOR " || ") FROM manuscript_files mf WHERE mf.manuscript_id = m.manuscript_id) AS file_bundle,
+                EXISTS(
+                    SELECT 1 FROM manuscript_payments mp
+                    WHERE mp.manuscript_id = m.manuscript_id
+                      AND mp.payment_status IN ("confirmed", "reviewed")
+                      AND mp.amount >= ' . (int) jasti_submission_screening_payment_amount() . '
+                ) AS submission_payment_confirmed
          FROM manuscripts m
          LEFT JOIN articles a ON a.manuscript_id = m.manuscript_id
          LEFT JOIN users u ON u.user_id = m.corresponding_author_id

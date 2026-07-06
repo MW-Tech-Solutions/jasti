@@ -1,4 +1,5 @@
 import * as React from "react"
+import { createPortal } from "react-dom"
 import { FileText, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -131,23 +132,14 @@ export function ManuscriptFileBundlePreview({
   emptyMessage?: string
 }) {
   const [previewEntry, setPreviewEntry] = React.useState<ManuscriptFileEntry | null>(null)
-  const containerRef = React.useRef<HTMLDivElement | null>(null)
-  const previousScrollY = React.useRef(0)
   const entries = React.useMemo(() => parseManuscriptFileBundle(value), [value])
 
   const openPreview = (entry: ManuscriptFileEntry) => {
-    previousScrollY.current = window.scrollY
     setPreviewEntry(entry)
-    window.setTimeout(() => {
-      containerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
-    }, 0)
   }
 
   const closePreview = () => {
     setPreviewEntry(null)
-    window.setTimeout(() => {
-      window.scrollTo({ top: previousScrollY.current, behavior: "smooth" })
-    }, 0)
   }
 
   if (!entries.length) {
@@ -156,8 +148,10 @@ export function ManuscriptFileBundlePreview({
 
   return (
     <>
-      {previewEntry ? <ManuscriptPreviewModal entry={previewEntry} onClose={closePreview} /> : null}
-      <div ref={containerRef} className={compact ? "space-y-2" : "space-y-3"}>
+      {previewEntry && typeof document !== "undefined"
+        ? createPortal(<ManuscriptPreviewModal entry={previewEntry} onClose={closePreview} />, document.body)
+        : null}
+      <div className={compact ? "space-y-2" : "space-y-3"}>
         {entries.map((entry) => (
           <div key={`${entry.label}:${entry.path}`} className={compact ? "rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2" : "rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-3"}>
             <div className={compact ? "flex flex-col gap-2" : "flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"}>
