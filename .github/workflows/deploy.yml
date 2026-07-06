@@ -31,4 +31,4 @@ jobs:
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./dist/  # Use ./build/ if you are using Create React App instead of Vite
-        server-dir: /jasti.pasacouncil.org/  # Change this to your specific Bluehost folder if needed
+        server-dir: ./  # Change this to your specific Bluehost folder if needed
