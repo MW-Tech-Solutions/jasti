@@ -2783,13 +2783,338 @@ function ReviewerPanels({ section, workspace, onSaved }: { section: string; work
     citation_manipulation: false,
     duplicate_publication_suspicion: false,
     ...Object.fromEntries(reviewCriteria.map((criteria) => [criteria.key, "1"])),
+
+    // Section A & Manuscript Info
+    title_of_manuscript: "",
+    date_received: new Date().toLocaleString(),
+    date_reviewed: new Date().toLocaleString(),
+    reviewer_code: String(workspace.user.user_id ?? ""),
+    review_round: "First Review",
+    declaration_no_conflict: false,
+    declaration_confidentiality: false,
+    declaration_objective: false,
+    reviewer_signature: "",
+    declaration_date: new Date().toLocaleString(),
+
+    // Section B: ratings (values "1" to "5")
+    originality_and_novelty_rating: "",
+    scientific_significance_rating: "",
+    technical_quality_rating: "",
+    research_design_rating: "",
+    methodology_rating: "",
+    experimental_design_rating: "",
+    statistical_analysis_rating: "",
+    data_analysis_rating: "",
+    interpretation_rating: "",
+    practical_relevance_rating: "",
+
+    // Section C: Title
+    quality_title_rating: "",
+    quality_title_comments: "",
+
+    // Section C: Abstract
+    quality_abstract_background: false,
+    quality_abstract_objective: false,
+    quality_abstract_methodology: false,
+    quality_abstract_results: false,
+    quality_abstract_conclusion: false,
+    quality_abstract_keywords: false,
+    quality_abstract_comments: "",
+
+    // Section C: Introduction
+    quality_intro_problem_clearly_stated: "",
+    quality_intro_objectives_defined: "",
+    quality_intro_gap_identified: "",
+    quality_intro_contribution_stated: "",
+    quality_intro_literature_introduced: "",
+    quality_intro_comments: "",
+
+    // Section C: Literature Review
+    quality_literature_coverage: "",
+    quality_literature_references: "",
+    quality_literature_analysis: "",
+    quality_literature_gap: "",
+    quality_literature_comments: "",
+
+    // Section C: Methodology
+    quality_methodology_design: "",
+    quality_methodology_procedure: "",
+    quality_methodology_equipment: "",
+    quality_methodology_model: "",
+    quality_methodology_algorithm: "",
+    quality_methodology_reproducibility: "",
+    quality_methodology_comments: "",
+
+    // Section C: Results
+    quality_results_presented: false,
+    quality_results_supported: false,
+    quality_results_figures: false,
+    quality_results_tables: false,
+    quality_results_statistical: false,
+    quality_results_reproducible: false,
+    quality_results_comments: "",
+
+    // Section C: Discussion
+    quality_discussion_interpretation: "",
+    quality_discussion_comparison: "",
+    quality_discussion_depth: "",
+    quality_discussion_implication: "",
+    quality_discussion_comments: "",
+
+    // Section C: Conclusion
+    quality_conclusion_supported: false,
+    quality_conclusion_not_overstated: false,
+    quality_conclusion_objectives: false,
+    quality_conclusion_recommendations: false,
+    quality_conclusion_comments: "",
+
+    // Section C: References
+    quality_references_adequacy: "",
+    quality_references_currency: "",
+    quality_references_style: "",
+    quality_references_completeness: "",
+    quality_references_comments: "",
+
+    // Section C: Figures and Tables
+    quality_figures_high_quality: "",
+    quality_figures_numbering: "",
+    quality_figures_captions: "",
+    quality_figures_readable: "",
+    quality_figures_necessary: "",
+    quality_figures_comments: "",
+
+    // Section C: Language Assessment
+    quality_language_grammar: "",
+    quality_language_english: "",
+    quality_language_organization: "",
+    quality_language_clarity: "",
+    quality_language_comments: "",
+
+    // Section C: Ethical Compliance
+    quality_ethical_no_plagiarism: "",
+    quality_ethical_citations: "",
+    quality_ethical_approval: "",
+    quality_ethical_conflict: "",
+    quality_ethical_applicable: "",
+    quality_ethical_comments: "",
+
+    // Major Strengths
+    strength_1: "",
+    strength_2: "",
+    strength_3: "",
+
+    // Major Weaknesses
+    weakness_1: "",
+    weakness_2: "",
+    weakness_3: "",
+
+    // Revisions
+    comments_major_revisions: "",
+    comments_minor_revisions: "",
+
+    // Overall Score
+    score_originality: "",
+    score_technical_quality_10: "",
+    score_methodology_10: "",
+    score_literature_review_10: "",
+    score_experimental_design_10: "",
+    score_results_10: "",
+    score_discussion_10: "",
+    score_conclusion_10: "",
+    score_language_10: "",
+    score_contribution_10: "",
   })
+  const buildCommentsToAuthor = (form: ReturnType<typeof createReviewForm>) => {
+    const lines: string[] = []
+    lines.push("### JASTI MANUSCRIPT EVALUATION REPORT\n")
+    lines.push(`**Manuscript ID:** ${form.manuscript_id || "N/A"}`)
+    lines.push(`**Title of Manuscript:** ${form.title_of_manuscript || "N/A"}`)
+    lines.push(`**Date Received:** ${form.date_received || "N/A"} | **Date Reviewed:** ${form.date_reviewed || "N/A"}`)
+    lines.push(`**Reviewer Code:** ${form.reviewer_code || "N/A"}`)
+    lines.push(`**Review Round:** ${form.review_round}\n`)
+
+    lines.push("---\n")
+    lines.push("### SECTION A: REVIEWER DECLARATION")
+    lines.push(`- No conflict of interest regarding this manuscript: ${form.declaration_no_conflict ? "✅ Confirmed" : "❌ No"}`)
+    lines.push(`- Agree to maintain confidentiality: ${form.declaration_confidentiality ? "✅ Confirmed" : "❌ No"}`)
+    lines.push(`- Review is objective, unbiased, and based solely on scientific merit: ${form.declaration_objective ? "✅ Confirmed" : "❌ No"}`)
+    lines.push(`- Reviewer Signature (Digital): ${form.reviewer_signature || "None provided"}`)
+    lines.push(`- Declaration Date: ${form.declaration_date}\n`)
+
+    lines.push("---\n")
+    lines.push("### SECTION B: GENERAL ASSESSMENT")
+    const criteriaList = [
+      { label: "Originality and Novelty", val: form.originality_and_novelty_rating },
+      { label: "Scientific Significance", val: form.scientific_significance_rating },
+      { label: "Technical Quality", val: form.technical_quality_rating },
+      { label: "Research Design", val: form.research_design_rating },
+      { label: "Methodology", val: form.methodology_rating },
+      { label: "Experimental Design", val: form.experimental_design_rating },
+      { label: "Statistical Analysis", val: form.statistical_analysis_rating },
+      { label: "Data Analysis", val: form.data_analysis_rating },
+      { label: "Interpretation of Results", val: form.interpretation_rating },
+      { label: "Practical Relevance", val: form.practical_relevance_rating },
+    ]
+    criteriaList.forEach(c => {
+      lines.push(`- **${c.label}:** ${c.val ? `${c.val}/5` : "Unrated"}`)
+    })
+    lines.push("")
+
+    lines.push("---\n")
+    lines.push("### SECTION C: MANUSCRIPT QUALITY")
+
+    lines.push(`#### 1. Title`)
+    lines.push(`- Rating: ${form.quality_title_rating || "Unrated"}`)
+    lines.push(`- Comments: ${form.quality_title_comments || "None"}\n`)
+
+    lines.push(`#### 2. Abstract`)
+    const abstractCovers: string[] = []
+    if (form.quality_abstract_background) abstractCovers.push("Background")
+    if (form.quality_abstract_objective) abstractCovers.push("Objective")
+    if (form.quality_abstract_methodology) abstractCovers.push("Methodology")
+    if (form.quality_abstract_results) abstractCovers.push("Results")
+    if (form.quality_abstract_conclusion) abstractCovers.push("Conclusion")
+    if (form.quality_abstract_keywords) abstractCovers.push("Keywords appropriate")
+    lines.push(`- Adequately covers: ${abstractCovers.join(", ") || "None declared"}`)
+    lines.push(`- Comments: ${form.quality_abstract_comments || "None"}\n`)
+
+    lines.push(`#### 3. Introduction`)
+    lines.push(`- Problem clearly stated: ${form.quality_intro_problem_clearly_stated || "Unrated"}`)
+    lines.push(`- Objectives clearly defined: ${form.quality_intro_objectives_defined || "Unrated"}`)
+    lines.push(`- Research gap identified: ${form.quality_intro_gap_identified || "Unrated"}`)
+    lines.push(`- Contribution clearly stated: ${form.quality_intro_contribution_stated || "Unrated"}`)
+    lines.push(`- Literature adequately introduced: ${form.quality_intro_literature_introduced || "Unrated"}`)
+    lines.push(`- Comments: ${form.quality_intro_comments || "None"}\n`)
+
+    lines.push(`#### 4. Literature Review`)
+    lines.push(`- Coverage: ${form.quality_literature_coverage || "Unrated"}`)
+    lines.push(`- Recent References: ${form.quality_literature_references || "Unrated"}`)
+    lines.push(`- Critical Analysis: ${form.quality_literature_analysis || "Unrated"}`)
+    lines.push(`- Research Gap: ${form.quality_literature_gap || "Unrated"}`)
+    lines.push(`- Comments: ${form.quality_literature_comments || "None"}\n`)
+
+    lines.push(`#### 5. Methodology`)
+    lines.push(`- Research Design: ${form.quality_methodology_design || "Unrated"}`)
+    lines.push(`- Experimental Procedure: ${form.quality_methodology_procedure || "Unrated"}`)
+    lines.push(`- Equipment Description: ${form.quality_methodology_equipment || "Unrated"}`)
+    lines.push(`- Mathematical Model: ${form.quality_methodology_model || "Unrated"}`)
+    lines.push(`- Algorithm Description: ${form.quality_methodology_algorithm || "Unrated"}`)
+    lines.push(`- Reproducibility: ${form.quality_methodology_reproducibility || "Unrated"}`)
+    lines.push(`- Comments: ${form.quality_methodology_comments || "None"}\n`)
+
+    lines.push(`#### 6. Results`)
+    const resultsEval: string[] = []
+    if (form.quality_results_presented) resultsEval.push("Clearly presented")
+    if (form.quality_results_supported) resultsEval.push("Supported by data")
+    if (form.quality_results_figures) resultsEval.push("Figures appropriate")
+    if (form.quality_results_tables) resultsEval.push("Tables appropriate")
+    if (form.quality_results_statistical) resultsEval.push("Statistical analysis adequate")
+    if (form.quality_results_reproducible) resultsEval.push("Results reproducible")
+    lines.push(`- Evaluations: ${resultsEval.join(", ") || "None selected"}`)
+    lines.push(`- Comments: ${form.quality_results_comments || "None"}\n`)
+
+    lines.push(`#### 7. Discussion`)
+    lines.push(`- Interpretation: ${form.quality_discussion_interpretation || "Unrated"}`)
+    lines.push(`- Comparison with Literature: ${form.quality_discussion_comparison || "Unrated"}`)
+    lines.push(`- Scientific Depth: ${form.quality_discussion_depth || "Unrated"}`)
+    lines.push(`- Practical Implication: ${form.quality_discussion_implication || "Unrated"}`)
+    lines.push(`- Comments: ${form.quality_discussion_comments || "None"}\n`)
+
+    lines.push(`#### 8. Conclusion`)
+    const conclusionEval: string[] = []
+    if (form.quality_conclusion_supported) conclusionEval.push("Supported by findings")
+    if (form.quality_conclusion_not_overstated) conclusionEval.push("Not overstated")
+    if (form.quality_conclusion_objectives) conclusionEval.push("Research objectives achieved")
+    if (form.quality_conclusion_recommendations) conclusionEval.push("Recommendations appropriate")
+    lines.push(`- Evaluations: ${conclusionEval.join(", ") || "None selected"}`)
+    lines.push(`- Comments: ${form.quality_conclusion_comments || "None"}\n`)
+
+    lines.push(`#### 9. References`)
+    lines.push(`- Adequacy: ${form.quality_references_adequacy || "Unrated"}`)
+    lines.push(`- Currency: ${form.quality_references_currency || "Unrated"}`)
+    lines.push(`- Citation Style: ${form.quality_references_style || "Unrated"}`)
+    lines.push(`- Completeness: ${form.quality_references_completeness || "Unrated"}`)
+    lines.push(`- Comments: ${form.quality_references_comments || "None"}\n`)
+
+    lines.push(`#### 10. Figures and Tables`)
+    lines.push(`- High quality: ${form.quality_figures_high_quality || "Unrated"}`)
+    lines.push(`- Proper numbering: ${form.quality_figures_numbering || "Unrated"}`)
+    lines.push(`- Appropriate captions: ${form.quality_figures_captions || "Unrated"}`)
+    lines.push(`- Readable: ${form.quality_figures_readable || "Unrated"}`)
+    lines.push(`- Necessary: ${form.quality_figures_necessary || "Unrated"}`)
+    lines.push(`- Comments: ${form.quality_figures_comments || "None"}\n`)
+
+    lines.push(`#### 11. Language Assessment`)
+    lines.push(`- Grammar: ${form.quality_language_grammar || "Unrated"}`)
+    lines.push(`- English Quality: ${form.quality_language_english || "Unrated"}`)
+    lines.push(`- Organization: ${form.quality_language_organization || "Unrated"}`)
+    lines.push(`- Clarity: ${form.quality_language_clarity || "Unrated"}`)
+    lines.push(`- Comments: ${form.quality_language_comments || "None"}\n`)
+
+    lines.push(`#### 12. Ethical Compliance`)
+    lines.push(`- No plagiarism detected: ${form.quality_ethical_no_plagiarism || "Unrated"}`)
+    lines.push(`- Proper citations: ${form.quality_ethical_citations || "Unrated"}`)
+    lines.push(`- Ethical approval obtained: ${form.quality_ethical_approval || "Unrated"}`)
+    lines.push(`- Conflict of interest declared: ${form.quality_ethical_conflict || "Unrated"}`)
+    lines.push(`- Human/Animal ethics applicable: ${form.quality_ethical_applicable || "Unrated"}`)
+    lines.push(`- Comments: ${form.quality_ethical_comments || "None"}\n`)
+
+    lines.push("---\n")
+    lines.push("### STRENGTHS & WEAKNESSES")
+    lines.push("#### Major Strengths")
+    if (form.strength_1) lines.push(`1. ${form.strength_1}`)
+    if (form.strength_2) lines.push(`2. ${form.strength_2}`)
+    if (form.strength_3) lines.push(`3. ${form.strength_3}`)
+    if (!form.strength_1 && !form.strength_2 && !form.strength_3) lines.push("None provided")
+    lines.push("\n#### Major Weaknesses")
+    if (form.weakness_1) lines.push(`1. ${form.weakness_1}`)
+    if (form.weakness_2) lines.push(`2. ${form.weakness_2}`)
+    if (form.weakness_3) lines.push(`3. ${form.weakness_3}`)
+    if (!form.weakness_1 && !form.weakness_2 && !form.weakness_3) lines.push("None provided")
+    lines.push("")
+
+    lines.push("---\n")
+    lines.push("### DETAILED REVISION COMMENTS FOR AUTHORS")
+    lines.push(`#### Major Revisions Required:`)
+    lines.push(form.comments_major_revisions || "None specified")
+    lines.push(`\n#### Minor Revisions Required:`)
+    lines.push(form.comments_minor_revisions || "None specified")
+    lines.push("")
+
+    return lines.join("\n")
+  }
   const [reviewForm, setReviewForm] = React.useState(createReviewForm)
   const [reviewScreenshot, setReviewScreenshot] = React.useState<File | null>(null)
   const [reviewPreviewOpen, setReviewPreviewOpen] = React.useState(false)
+  const [formTab, setFormTab] = React.useState("info")
+  const [openSectionC, setOpenSectionC] = React.useState("title")
+
   const selectedReviewManuscript = acceptedInvitations.find((entry) => String(entry.manuscript_id) === reviewForm.manuscript_id) ?? null
-  const totalReviewScore = reviewCriteria.reduce((sum, criteria) => sum + Number(reviewForm[criteria.key] || 0), 0)
-  const reviewPercent = Math.round((totalReviewScore / 110) * 10000) / 100
+  
+  React.useEffect(() => {
+    if (selectedReviewManuscript) {
+      setReviewForm((prev) => ({
+        ...prev,
+        title_of_manuscript: String(selectedReviewManuscript.title ?? ""),
+        date_received: String(selectedReviewManuscript.response_date || selectedReviewManuscript.invitation_date || prev.date_received || new Date().toLocaleString()),
+      }))
+    }
+  }, [selectedReviewManuscript])
+
+  const totalReviewScore = [
+    reviewForm.score_originality,
+    reviewForm.score_technical_quality_10,
+    reviewForm.score_methodology_10,
+    reviewForm.score_literature_review_10,
+    reviewForm.score_experimental_design_10,
+    reviewForm.score_results_10,
+    reviewForm.score_discussion_10,
+    reviewForm.score_conclusion_10,
+    reviewForm.score_language_10,
+    reviewForm.score_contribution_10,
+  ].reduce((sum, val) => sum + Number(val || 0), 0)
+
+  const reviewPercent = Math.round((totalReviewScore / 100) * 10000) / 100
   const reviewDraftKey = React.useCallback((manuscriptId: string) => `jasti-review-draft-${String(workspace.user.user_id ?? "anonymous")}-${manuscriptId}`, [workspace.user.user_id])
   React.useEffect(() => {
     const manuscriptId = reviewForm.manuscript_id
@@ -2856,116 +3181,1027 @@ function ReviewerPanels({ section, workspace, onSaved }: { section: string; work
     <Card className="border-white/70 bg-white/85 backdrop-blur">
       <CardHeader><CardTitle>Review Evaluation Form</CardTitle><CardDescription>Complete declarations, scoring, author comments, confidential editor notes, and ethical checks before submitting.</CardDescription></CardHeader>
       <CardContent>
+        {/* Navigation Tabs inside the Evaluation Form Card */}
+        <div className="flex flex-wrap gap-2 border-b border-slate-200 pb-3 mb-6">
+          {[
+            { id: "info", label: "1. Manuscript & Decl" },
+            { id: "general", label: "2. General Assessment" },
+            { id: "quality", label: "3. Manuscript Quality" },
+            { id: "strengths", label: "4. Strengths & Revisions" },
+            { id: "score", label: "5. Score & Submit" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setFormTab(tab.id)}
+              className={cn(
+                "rounded-xl px-4 py-2 text-sm font-medium transition-all duration-200",
+                formTab === tab.id
+                  ? "bg-jostum-600 text-white shadow-md shadow-jostum-600/20 font-semibold"
+                  : "bg-slate-100/80 text-slate-600 hover:bg-slate-200/90"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
         <form className="space-y-6" onSubmit={async (e)=>{
           e.preventDefault()
           if (!reviewForm.manuscript_id) {
             toast.error("Select a manuscript before submitting your review.")
             return
           }
+          if (!reviewForm.declaration_no_conflict || !reviewForm.declaration_confidentiality || !reviewForm.declaration_objective) {
+            toast.error("Conflict of interest and confidentiality declarations are required before submitting a review.")
+            return
+          }
+
+          // Validate overall scores are filled
+          const requiredScores = [
+            { val: reviewForm.score_originality, label: "Originality" },
+            { val: reviewForm.score_technical_quality_10, label: "Technical Quality" },
+            { val: reviewForm.score_methodology_10, label: "Methodology" },
+            { val: reviewForm.score_literature_review_10, label: "Literature Review" },
+            { val: reviewForm.score_experimental_design_10, label: "Experimental Design" },
+            { val: reviewForm.score_results_10, label: "Results" },
+            { val: reviewForm.score_discussion_10, label: "Discussion" },
+            { val: reviewForm.score_conclusion_10, label: "Conclusion" },
+            { val: reviewForm.score_language_10, label: "Language" },
+            { val: reviewForm.score_contribution_10, label: "Overall Contribution" },
+          ]
+          const missingScores = requiredScores.filter(s => !s.val || Number(s.val) < 1 || Number(s.val) > 10)
+          if (missingScores.length > 0) {
+            toast.error(`Please provide overall scores (1-10) for: ${missingScores.map(m => m.label).join(", ")}`)
+            return
+          }
+
           setSaving(true)
           try {
             const submittedManuscriptId = reviewForm.manuscript_id
             const payload = new FormData()
-            Object.entries(reviewForm).forEach(([key, value]) => payload.append(key, typeof value === "boolean" ? (value ? "1" : "0") : String(value)))
+            
+            // Build the formatted comments_to_author report
+            const formattedCommentsReport = buildCommentsToAuthor(reviewForm)
+            
+            // Populate all fields from the reviewForm state
+            Object.entries(reviewForm).forEach(([key, value]) => {
+              payload.append(key, typeof value === "boolean" ? (value ? "1" : "0") : String(value))
+            })
+            
+            // Explicitly overwrite/add core parameters
             payload.set("manuscript_id", String(Number(reviewForm.manuscript_id)))
-            reviewCriteria.forEach((criteria) => payload.set(criteria.key, String(Number(reviewForm[criteria.key] || 0))))
+            payload.set("comments_to_author", formattedCommentsReport)
+            
+            // Format strengths and weaknesses lists for standard columns
+            const strengthsText = [reviewForm.strength_1, reviewForm.strength_2, reviewForm.strength_3].filter(Boolean).map((s, i) => `${i+1}. ${s}`).join("\n")
+            const weaknessesText = [reviewForm.weakness_1, reviewForm.weakness_2, reviewForm.weakness_3].filter(Boolean).map((w, i) => `${i+1}. ${w}`).join("\n")
+            
+            payload.set("comments_strengths", strengthsText)
+            payload.set("comments_weaknesses", weaknessesText)
+            payload.set("comments_required_corrections", reviewForm.comments_major_revisions)
+            payload.set("comments_suggestions", reviewForm.comments_minor_revisions)
+
+            // Declarations mapping for PHP validation passing:
+            payload.set("no_personal_conflict", "1")
+            payload.set("no_institutional_conflict", "1")
+            payload.set("no_financial_conflict", "1")
+            payload.set("conflict_confirmed", "1")
+            payload.set("confidentiality_agreed", "1")
+
+            // Map standard 11 criteria scores for backend PHP validations (must be between 1 and 10)
+            const mappedScores = {
+              score_novelty: Math.max(1, Math.min(10, Number(reviewForm.score_originality || 5))),
+              score_relevance: Math.max(1, Math.min(10, Number(reviewForm.score_experimental_design_10 || 5))),
+              score_technical_quality: Math.max(1, Math.min(10, Number(reviewForm.score_technical_quality_10 || 5))),
+              score_methodology: Math.max(1, Math.min(10, Number(reviewForm.score_methodology_10 || 5))),
+              score_literature_review: Math.max(1, Math.min(10, Number(reviewForm.score_literature_review_10 || 5))),
+              score_data_analysis: Math.max(1, Math.min(10, Number(reviewForm.score_results_10 || 5))),
+              score_clarity: Math.max(1, Math.min(10, Number(reviewForm.score_discussion_10 || 5))),
+              score_references_quality: Math.max(1, Math.min(10, Number(reviewForm.score_conclusion_10 || 5))),
+              score_grammar_language: Math.max(1, Math.min(10, Number(reviewForm.score_language_10 || 5))),
+              score_ethical_compliance: 10,
+              score_contribution: Math.max(1, Math.min(10, Number(reviewForm.score_contribution_10 || 5))),
+            }
+            Object.entries(mappedScores).forEach(([key, val]) => {
+              payload.set(key, String(val))
+            })
+
             if (reviewScreenshot) payload.append("screenshot_attachment", reviewScreenshot)
+            
             await submitReview(payload as unknown as Record<string, unknown>)
             window.localStorage.removeItem(reviewDraftKey(submittedManuscriptId))
             setReviewForm(createReviewForm())
             setReviewScreenshot(null)
             await onSaved()
-            toast.success("Review submitted.")
+            toast.success("Review submitted successfully.")
           } catch (error) {
             toast.error(errorText(error, "Unable to submit review."))
           } finally {
             setSaving(false)
           }
         }}>
-          <div className="space-y-2">
-            <Label>Accepted invitation manuscript</Label>
-            <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={reviewForm.manuscript_id} onChange={(e)=>setReviewForm((p)=>({...p,manuscript_id:e.target.value}))}>
-              <option value="">Select manuscript</option>
-              {acceptedInvitations.map((entry)=><option key={String(entry.manuscript_id)} value={String(entry.manuscript_id)}>{String(entry.title ?? entry.manuscript_id)}</option>)}
-            </select>
-          </div>
 
-          {selectedReviewManuscript ? <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <p className="font-semibold text-slate-900">{String(selectedReviewManuscript.title ?? selectedReviewManuscript.manuscript_id)}</p>
-            <div className="mt-3 grid gap-2 text-sm text-slate-600 md:grid-cols-2">
-              <p>Submission date: <span className="font-semibold text-slate-900">{String(selectedReviewManuscript.submission_date ?? "Not recorded")}</span></p>
-              <p>Review deadline: <span className="font-semibold text-slate-900">{deadlineCountdown(selectedReviewManuscript.review_deadline)}</span></p>
-              <p>Review model: <span className="font-semibold text-slate-900">{reviewModelLabels[String(selectedReviewManuscript.review_model ?? "single_blind")] ?? String(selectedReviewManuscript.review_model ?? "Single blind")}</span></p>
-              <p>Article type: <span className="font-semibold text-slate-900">{String(selectedReviewManuscript.article_type ?? "Not specified")}</span></p>
+          {/* TAB 1: Manuscript Info & Declaration */}
+          {formTab === "info" && (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label>Accepted invitation manuscript</Label>
+                <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={reviewForm.manuscript_id} onChange={(e)=>setReviewForm((p)=>({...p,manuscript_id:e.target.value}))}>
+                  <option value="">Select manuscript</option>
+                  {acceptedInvitations.map((entry)=><option key={String(entry.manuscript_id)} value={String(entry.manuscript_id)}>{String(entry.title ?? entry.manuscript_id)}</option>)}
+                </select>
+              </div>
+
+              {selectedReviewManuscript ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="font-semibold text-slate-900">{String(selectedReviewManuscript.title ?? selectedReviewManuscript.manuscript_id)}</p>
+                  <div className="mt-3 grid gap-2 text-sm text-slate-600 md:grid-cols-2">
+                    <p>Submission date: <span className="font-semibold text-slate-900">{String(selectedReviewManuscript.submission_date ?? "Not recorded")}</span></p>
+                    <p>Review deadline: <span className="font-semibold text-slate-900">{deadlineCountdown(selectedReviewManuscript.review_deadline)}</span></p>
+                    <p>Review model: <span className="font-semibold text-slate-900">{reviewModelLabels[String(selectedReviewManuscript.review_model ?? "single_blind")] ?? String(selectedReviewManuscript.review_model ?? "Single blind")}</span></p>
+                    <p>Article type: <span className="font-semibold text-slate-900">{String(selectedReviewManuscript.article_type ?? "Not specified")}</span></p>
+                  </div>
+                  <div className="mt-3"><ManuscriptFileBundlePreview value={selectedReviewManuscript.file_bundle} emptyMessage="No manuscript file bundle available yet." /></div>
+                  <div className="mt-3"><ManuscriptFileBundlePreview value={selectedReviewManuscript.previous_revision_files} emptyMessage="No previous revision files available." /></div>
+                </div>
+              ) : null}
+
+              <div className="grid gap-4 md:grid-cols-2 border-t border-slate-100 pt-4">
+                <div className="space-y-2">
+                  <Label>Manuscript ID</Label>
+                  <Input readOnly value={reviewForm.manuscript_id || ""} placeholder="Select manuscript above" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Title of Manuscript</Label>
+                  <Input readOnly value={reviewForm.title_of_manuscript || ""} placeholder="Select manuscript above" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date Received</Label>
+                  <Input type="text" value={reviewForm.date_received || ""} onChange={(e)=>setReviewForm((p)=>({...p,date_received:e.target.value}))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date Reviewed</Label>
+                  <Input type="text" value={reviewForm.date_reviewed} onChange={(e)=>setReviewForm((p)=>({...p,date_reviewed:e.target.value}))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Reviewer Code</Label>
+                  <Input value={reviewForm.reviewer_code} onChange={(e)=>setReviewForm((p)=>({...p,reviewer_code:e.target.value}))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Review Round</Label>
+                  <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={reviewForm.review_round} onChange={(e)=>setReviewForm((p)=>({...p,review_round:e.target.value}))}>
+                    <option value="First Review">First Review</option>
+                    <option value="Second Review">Second Review</option>
+                    <option value="Third Review">Third Review</option>
+                    <option value="Final Review">Final Review</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-6 border-t border-slate-200 pt-6 space-y-4">
+                <p className="font-bold text-slate-800 text-sm tracking-wide">SECTION A: REVIEWER DECLARATION</p>
+                <p className="text-sm text-slate-600">I hereby declare that:</p>
+                <div className="space-y-3">
+                  {[
+                    { key: "declaration_no_conflict", label: "I have no conflict of interest regarding this manuscript." },
+                    { key: "declaration_confidentiality", label: "I agree to maintain confidentiality." },
+                    { key: "declaration_objective", label: "The review is objective, unbiased, and based solely on scientific merit." }
+                  ].map((item) => (
+                    <label key={item.key} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 select-none cursor-pointer hover:bg-slate-50 transition-colors">
+                      <input
+                        type="checkbox"
+                        className="mt-0.5"
+                        checked={Boolean(reviewForm[item.key as keyof typeof reviewForm])}
+                        onChange={(e)=>setReviewForm((p)=>({...p,[item.key]:e.target.checked}))}
+                      />
+                      <span>{item.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 mt-4">
+                  <div className="space-y-2">
+                    <Label>Reviewer Signature (Optional)</Label>
+                    <Input value={reviewForm.reviewer_signature} onChange={(e)=>setReviewForm((p)=>({...p,reviewer_signature:e.target.value}))} placeholder="Type name to sign digitally" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Date</Label>
+                    <Input type="text" value={reviewForm.declaration_date} onChange={(e)=>setReviewForm((p)=>({...p,declaration_date:e.target.value}))} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-6 border-t border-slate-100">
+                <Button type="button" onClick={() => setFormTab("general")}>Next Step</Button>
+              </div>
             </div>
-            <div className="mt-3"><ManuscriptFileBundlePreview value={selectedReviewManuscript.file_bundle} emptyMessage="No manuscript file bundle available yet." /></div>
-            <div className="mt-3"><ManuscriptFileBundlePreview value={selectedReviewManuscript.previous_revision_files} emptyMessage="No previous revision files available." /></div>
-          </div> : null}
+          )}
 
-          <div className="grid gap-3 md:grid-cols-2">
-            {[
-              ["no_personal_conflict", "I confirm that I have no personal conflict of interest."],
-              ["no_institutional_conflict", "I confirm that I have no institutional conflict of interest."],
-              ["no_financial_conflict", "I confirm that I have no financial conflict of interest."],
-              ["conflict_confirmed", "I confirm that I have no conflict of interest."],
-              ["confidentiality_agreed", "I agree to maintain confidentiality."],
-            ].map(([key, label]) => <label key={key} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"><input type="checkbox" checked={Boolean(reviewForm[key as keyof typeof reviewForm])} onChange={(event)=>setReviewForm((prev)=>({...prev,[key]:event.target.checked}))} />{label}</label>)}
-          </div>
+          {/* TAB 2: General Assessment */}
+          {formTab === "general" && (
+            <div className="space-y-4">
+              <p className="font-bold text-slate-800 text-sm tracking-wide">SECTION B: GENERAL ASSESSMENT</p>
+              <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <table className="w-full text-sm text-left text-slate-500 border-collapse min-w-[700px]">
+                  <thead className="text-xs text-slate-700 uppercase bg-slate-50 border-b border-slate-200">
+                    <tr>
+                      <th scope="col" className="px-6 py-4 font-semibold text-slate-900">Evaluation Criterion</th>
+                      <th scope="col" className="px-4 py-4 text-center font-semibold text-slate-900 w-28">Excellent (5)</th>
+                      <th scope="col" className="px-4 py-4 text-center font-semibold text-slate-900 w-28">Good (4)</th>
+                      <th scope="col" className="px-4 py-4 text-center font-semibold text-slate-900 w-28">Fair (3)</th>
+                      <th scope="col" className="px-4 py-4 text-center font-semibold text-slate-900 w-28">Poor (2)</th>
+                      <th scope="col" className="px-4 py-4 text-center font-semibold text-slate-900 w-28">Very Poor (1)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {[
+                      { key: "originality_and_novelty_rating", label: "Originality and Novelty" },
+                      { key: "scientific_significance_rating", label: "Scientific Significance" },
+                      { key: "technical_quality_rating", label: "Technical Quality" },
+                      { key: "research_design_rating", label: "Research Design" },
+                      { key: "methodology_rating", label: "Methodology" },
+                      { key: "experimental_design_rating", label: "Experimental Design" },
+                      { key: "statistical_analysis_rating", label: "Statistical Analysis" },
+                      { key: "data_analysis_rating", label: "Data Analysis" },
+                      { key: "interpretation_rating", label: "Interpretation of Results" },
+                      { key: "practical_relevance_rating", label: "Practical Relevance" },
+                    ].map((item) => (
+                      <tr key={item.key} className="bg-white hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4 font-medium text-slate-900">{item.label}</td>
+                        {[5, 4, 3, 2, 1].map((val) => (
+                          <td key={val} className="px-4 py-4 text-center">
+                            <input
+                              type="radio"
+                              name={item.key}
+                              value={String(val)}
+                              checked={reviewForm[item.key as keyof typeof reviewForm] === String(val)}
+                              onChange={(e)=>setReviewForm((p)=>({...p,[item.key]:e.target.value}))}
+                              className="h-4 w-4 text-jostum-600 border-slate-300 focus:ring-jostum-500 cursor-pointer"
+                            />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-sm font-semibold text-slate-900">Evaluation Parameters</p><p className="text-sm text-slate-600">Total: {totalReviewScore}/110 ({reviewPercent}%)</p></div>
-            <div className="grid gap-3 md:grid-cols-2">
-              {reviewCriteria.map((criteria)=><div key={criteria.key} className="space-y-2"><Label>{criteria.label} (1-10)</Label><Input type="number" min={1} max={10} inputMode="numeric" value={String(reviewForm[criteria.key])} onChange={(e)=>{ const raw = e.target.value; if (raw === "") { setReviewForm((p)=>({...p,[criteria.key]:""})); return } const capped = Math.max(1, Math.min(10, Number(raw))); setReviewForm((p)=>({...p,[criteria.key]:String(capped)})) }} /></div>)}
+              <div className="flex justify-between pt-6 border-t border-slate-100 mt-6">
+                <Button type="button" variant="outline" onClick={() => setFormTab("info")}>Previous</Button>
+                <Button type="button" onClick={() => setFormTab("quality")}>Next Step</Button>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2"><Label>Strengths</Label><Textarea rows={4} value={reviewForm.comments_strengths} onChange={(e)=>setReviewForm((p)=>({...p,comments_strengths:e.target.value}))} /></div>
-            <div className="space-y-2"><Label>Weaknesses</Label><Textarea rows={4} value={reviewForm.comments_weaknesses} onChange={(e)=>setReviewForm((p)=>({...p,comments_weaknesses:e.target.value}))} /></div>
-            <div className="space-y-2"><Label>Required corrections</Label><Textarea rows={4} value={reviewForm.comments_required_corrections} onChange={(e)=>setReviewForm((p)=>({...p,comments_required_corrections:e.target.value}))} /></div>
-            <div className="space-y-2"><Label>Suggestions for improvement</Label><Textarea rows={4} value={reviewForm.comments_suggestions} onChange={(e)=>setReviewForm((p)=>({...p,comments_suggestions:e.target.value}))} /></div>
-            <div className="space-y-2 md:col-span-2"><Label>Comments to Author</Label><Textarea rows={6} value={reviewForm.comments_to_author} onChange={(e)=>setReviewForm((p)=>({...p,comments_to_author:e.target.value}))} /></div>
-          </div>
+          {/* TAB 3: Manuscript Quality */}
+          {formTab === "quality" && (
+            <div className="space-y-4">
+              <p className="font-bold text-slate-800 text-sm tracking-wide">SECTION C: MANUSCRIPT QUALITY</p>
+              <div className="space-y-3">
+                {[
+                  {
+                    id: "title",
+                    label: "1. Title",
+                    content: (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Rate the Title</Label>
+                          <div className="flex flex-wrap gap-4">
+                            {["Excellent", "Good", "Fair", "Poor"].map((opt) => (
+                              <label key={opt} className="flex items-center gap-2 cursor-pointer select-none">
+                                <input
+                                  type="radio"
+                                  name="quality_title_rating"
+                                  value={opt}
+                                  checked={reviewForm.quality_title_rating === opt}
+                                  onChange={(e)=>setReviewForm((p)=>({...p,quality_title_rating:e.target.value}))}
+                                  className="h-4 w-4 text-jostum-600 border-slate-300 focus:ring-jostum-500"
+                                />
+                                <span className="text-sm text-slate-700">{opt}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Comments</Label>
+                          <Textarea rows={3} value={reviewForm.quality_title_comments} onChange={(e)=>setReviewForm((p)=>({...p,quality_title_comments:e.target.value}))} placeholder="Enter comments here..." />
+                        </div>
+                      </div>
+                    )
+                  },
+                  {
+                    id: "abstract",
+                    label: "2. Abstract",
+                    content: (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Please assess whether the abstract adequately covers:</Label>
+                          <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                            {[
+                              { key: "quality_abstract_background", label: "Background" },
+                              { key: "quality_abstract_objective", label: "Objective" },
+                              { key: "quality_abstract_methodology", label: "Methodology" },
+                              { key: "quality_abstract_results", label: "Results" },
+                              { key: "quality_abstract_conclusion", label: "Conclusion" },
+                              { key: "quality_abstract_keywords", label: "Keywords appropriate" }
+                            ].map((chk) => (
+                              <label key={chk.key} className="flex items-center gap-2.5 cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(reviewForm[chk.key as keyof typeof reviewForm])}
+                                  onChange={(e)=>setReviewForm((p)=>({...p,[chk.key]:e.target.checked}))}
+                                  className="rounded border-slate-300 text-jostum-600 focus:ring-jostum-500"
+                                />
+                                <span className="text-sm text-slate-700">{chk.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Comments</Label>
+                          <Textarea rows={3} value={reviewForm.quality_abstract_comments} onChange={(e)=>setReviewForm((p)=>({...p,quality_abstract_comments:e.target.value}))} placeholder="Enter comments here..." />
+                        </div>
+                      </div>
+                    )
+                  },
+                  {
+                    id: "introduction",
+                    label: "3. Introduction",
+                    content: (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Rate the following:</Label>
+                          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                            <table className="w-full text-sm text-left text-slate-500 border-collapse">
+                              <thead className="text-xs text-slate-700 bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                  <th className="px-4 py-3 font-semibold text-slate-900">Item</th>
+                                  <th className="px-4 py-3 text-center font-semibold text-slate-900 w-24">Yes</th>
+                                  <th className="px-4 py-3 text-center font-semibold text-slate-900 w-24">No</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-200">
+                                {[
+                                  { key: "quality_intro_problem_clearly_stated", label: "Problem clearly stated" },
+                                  { key: "quality_intro_objectives_defined", label: "Objectives clearly defined" },
+                                  { key: "quality_intro_gap_identified", label: "Research gap identified" },
+                                  { key: "quality_intro_contribution_stated", label: "Contribution clearly stated" },
+                                  { key: "quality_intro_literature_introduced", label: "Literature adequately introduced" },
+                                ].map((row) => (
+                                  <tr key={row.key} className="bg-white hover:bg-slate-50/55">
+                                    <td className="px-4 py-2.5 font-medium text-slate-900">{row.label}</td>
+                                    {["Yes", "No"].map((val) => (
+                                      <td key={val} className="px-4 py-2.5 text-center">
+                                        <input
+                                          type="radio"
+                                          name={row.key}
+                                          value={val}
+                                          checked={reviewForm[row.key as keyof typeof reviewForm] === val}
+                                          onChange={(e)=>setReviewForm((p)=>({...p,[row.key]:e.target.value}))}
+                                          className="h-4 w-4 text-jostum-600 border-slate-300 focus:ring-jostum-500 cursor-pointer"
+                                        />
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Comments</Label>
+                          <Textarea rows={3} value={reviewForm.quality_intro_comments} onChange={(e)=>setReviewForm((p)=>({...p,quality_intro_comments:e.target.value}))} placeholder="Enter comments here..." />
+                        </div>
+                      </div>
+                    )
+                  },
+                  {
+                    id: "literature",
+                    label: "4. Literature Review",
+                    content: (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Rate:</Label>
+                          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                            <table className="w-full text-sm text-left text-slate-500 border-collapse">
+                              <thead className="text-xs text-slate-700 bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                  <th className="px-4 py-3 font-semibold text-slate-900">Criterion</th>
+                                  {["Excellent", "Good", "Fair", "Poor"].map((opt) => (
+                                    <th key={opt} className="px-4 py-3 text-center font-semibold text-slate-900 w-24">{opt}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-200">
+                                {[
+                                  { key: "quality_literature_coverage", label: "Coverage" },
+                                  { key: "quality_literature_references", label: "Recent References" },
+                                  { key: "quality_literature_analysis", label: "Critical Analysis" },
+                                  { key: "quality_literature_gap", label: "Research Gap" },
+                                ].map((row) => (
+                                  <tr key={row.key} className="bg-white hover:bg-slate-50/50">
+                                    <td className="px-4 py-2.5 font-medium text-slate-900">{row.label}</td>
+                                    {["Excellent", "Good", "Fair", "Poor"].map((val) => (
+                                      <td key={val} className="px-4 py-2.5 text-center">
+                                        <input
+                                          type="radio"
+                                          name={row.key}
+                                          value={val}
+                                          checked={reviewForm[row.key as keyof typeof reviewForm] === val}
+                                          onChange={(e)=>setReviewForm((p)=>({...p,[row.key]:e.target.value}))}
+                                          className="h-4 w-4 text-jostum-600 border-slate-300 focus:ring-jostum-500 cursor-pointer"
+                                        />
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Comments</Label>
+                          <Textarea rows={3} value={reviewForm.quality_literature_comments} onChange={(e)=>setReviewForm((p)=>({...p,quality_literature_comments:e.target.value}))} placeholder="Enter comments here..." />
+                        </div>
+                      </div>
+                    )
+                  },
+                  {
+                    id: "methodology",
+                    label: "5. Methodology",
+                    content: (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Please evaluate:</Label>
+                          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                            <table className="w-full text-sm text-left text-slate-500 border-collapse">
+                              <thead className="text-xs text-slate-700 bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                  <th className="px-4 py-3 font-semibold text-slate-900">Criterion</th>
+                                  {["Excellent", "Good", "Fair", "Poor"].map((opt) => (
+                                    <th key={opt} className="px-4 py-3 text-center font-semibold text-slate-900 w-24">{opt}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-200">
+                                {[
+                                  { key: "quality_methodology_design", label: "Research Design" },
+                                  { key: "quality_methodology_procedure", label: "Experimental Procedure" },
+                                  { key: "quality_methodology_equipment", label: "Equipment Description" },
+                                  { key: "quality_methodology_model", label: "Mathematical Model" },
+                                  { key: "quality_methodology_algorithm", label: "Algorithm Description" },
+                                  { key: "quality_methodology_reproducibility", label: "Reproducibility" },
+                                ].map((row) => (
+                                  <tr key={row.key} className="bg-white hover:bg-slate-50/50">
+                                    <td className="px-4 py-2.5 font-medium text-slate-900">{row.label}</td>
+                                    {["Excellent", "Good", "Fair", "Poor"].map((val) => (
+                                      <td key={val} className="px-4 py-2.5 text-center">
+                                        <input
+                                          type="radio"
+                                          name={row.key}
+                                          value={val}
+                                          checked={reviewForm[row.key as keyof typeof reviewForm] === val}
+                                          onChange={(e)=>setReviewForm((p)=>({...p,[row.key]:e.target.value}))}
+                                          className="h-4 w-4 text-jostum-600 border-slate-300 focus:ring-jostum-500 cursor-pointer"
+                                        />
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Comments</Label>
+                          <Textarea rows={3} value={reviewForm.quality_methodology_comments} onChange={(e)=>setReviewForm((p)=>({...p,quality_methodology_comments:e.target.value}))} placeholder="Enter comments here..." />
+                        </div>
+                      </div>
+                    )
+                  },
+                  {
+                    id: "results",
+                    label: "6. Results",
+                    content: (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Evaluate:</Label>
+                          <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                            {[
+                              { key: "quality_results_presented", label: "Clearly presented" },
+                              { key: "quality_results_supported", label: "Supported by data" },
+                              { key: "quality_results_figures", label: "Figures appropriate" },
+                              { key: "quality_results_tables", label: "Tables appropriate" },
+                              { key: "quality_results_statistical", label: "Statistical analysis adequate" },
+                              { key: "quality_results_reproducible", label: "Results reproducible" }
+                            ].map((chk) => (
+                              <label key={chk.key} className="flex items-center gap-2.5 cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(reviewForm[chk.key as keyof typeof reviewForm])}
+                                  onChange={(e)=>setReviewForm((p)=>({...p,[chk.key]:e.target.checked}))}
+                                  className="rounded border-slate-300 text-jostum-600 focus:ring-jostum-500"
+                                />
+                                <span className="text-sm text-slate-700">{chk.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Comments</Label>
+                          <Textarea rows={3} value={reviewForm.quality_results_comments} onChange={(e)=>setReviewForm((p)=>({...p,quality_results_comments:e.target.value}))} placeholder="Enter comments here..." />
+                        </div>
+                      </div>
+                    )
+                  },
+                  {
+                    id: "discussion",
+                    label: "7. Discussion",
+                    content: (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Please rate:</Label>
+                          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                            <table className="w-full text-sm text-left text-slate-500 border-collapse">
+                              <thead className="text-xs text-slate-700 bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                  <th className="px-4 py-3 font-semibold text-slate-900">Criterion</th>
+                                  {["Excellent", "Good", "Fair", "Poor"].map((opt) => (
+                                    <th key={opt} className="px-4 py-3 text-center font-semibold text-slate-900 w-24">{opt}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-200">
+                                {[
+                                  { key: "quality_discussion_interpretation", label: "Interpretation" },
+                                  { key: "quality_discussion_comparison", label: "Comparison with Literature" },
+                                  { key: "quality_discussion_depth", label: "Scientific Depth" },
+                                  { key: "quality_discussion_implication", label: "Practical Implication" },
+                                ].map((row) => (
+                                  <tr key={row.key} className="bg-white hover:bg-slate-50/50">
+                                    <td className="px-4 py-2.5 font-medium text-slate-900">{row.label}</td>
+                                    {["Excellent", "Good", "Fair", "Poor"].map((val) => (
+                                      <td key={val} className="px-4 py-2.5 text-center">
+                                        <input
+                                          type="radio"
+                                          name={row.key}
+                                          value={val}
+                                          checked={reviewForm[row.key as keyof typeof reviewForm] === val}
+                                          onChange={(e)=>setReviewForm((p)=>({...p,[row.key]:e.target.value}))}
+                                          className="h-4 w-4 text-jostum-600 border-slate-300 focus:ring-jostum-500 cursor-pointer"
+                                        />
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Comments</Label>
+                          <Textarea rows={3} value={reviewForm.quality_discussion_comments} onChange={(e)=>setReviewForm((p)=>({...p,quality_discussion_comments:e.target.value}))} placeholder="Enter comments here..." />
+                        </div>
+                      </div>
+                    )
+                  },
+                  {
+                    id: "conclusion",
+                    label: "8. Conclusion",
+                    content: (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Evaluate:</Label>
+                          <div className="grid gap-3 grid-cols-2 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                            {[
+                              { key: "quality_conclusion_supported", label: "Supported by findings" },
+                              { key: "quality_conclusion_not_overstated", label: "Not overstated" },
+                              { key: "quality_conclusion_objectives", label: "Research objectives achieved" },
+                              { key: "quality_conclusion_recommendations", label: "Recommendations appropriate" }
+                            ].map((chk) => (
+                              <label key={chk.key} className="flex items-center gap-2.5 cursor-pointer select-none">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(reviewForm[chk.key as keyof typeof reviewForm])}
+                                  onChange={(e)=>setReviewForm((p)=>({...p,[chk.key]:e.target.checked}))}
+                                  className="rounded border-slate-300 text-jostum-600 focus:ring-jostum-500"
+                                />
+                                <span className="text-sm text-slate-700">{chk.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Comments</Label>
+                          <Textarea rows={3} value={reviewForm.quality_conclusion_comments} onChange={(e)=>setReviewForm((p)=>({...p,quality_conclusion_comments:e.target.value}))} placeholder="Enter comments here..." />
+                        </div>
+                      </div>
+                    )
+                  },
+                  {
+                    id: "references",
+                    label: "9. References",
+                    content: (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Please evaluate:</Label>
+                          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                            <table className="w-full text-sm text-left text-slate-500 border-collapse">
+                              <thead className="text-xs text-slate-700 bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                  <th className="px-4 py-3 font-semibold text-slate-900">Criterion</th>
+                                  {["Excellent", "Good", "Fair", "Poor"].map((opt) => (
+                                    <th key={opt} className="px-4 py-3 text-center font-semibold text-slate-900 w-24">{opt}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-200">
+                                {[
+                                  { key: "quality_references_adequacy", label: "Adequacy" },
+                                  { key: "quality_references_currency", label: "Currency" },
+                                  { key: "quality_references_style", label: "Citation Style" },
+                                  { key: "quality_references_completeness", label: "Completeness" },
+                                ].map((row) => (
+                                  <tr key={row.key} className="bg-white hover:bg-slate-50/50">
+                                    <td className="px-4 py-2.5 font-medium text-slate-900">{row.label}</td>
+                                    {["Excellent", "Good", "Fair", "Poor"].map((val) => (
+                                      <td key={val} className="px-4 py-2.5 text-center">
+                                        <input
+                                          type="radio"
+                                          name={row.key}
+                                          value={val}
+                                          checked={reviewForm[row.key as keyof typeof reviewForm] === val}
+                                          onChange={(e)=>setReviewForm((p)=>({...p,[row.key]:e.target.value}))}
+                                          className="h-4 w-4 text-jostum-600 border-slate-300 focus:ring-jostum-500 cursor-pointer"
+                                        />
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Comments</Label>
+                          <Textarea rows={3} value={reviewForm.quality_references_comments} onChange={(e)=>setReviewForm((p)=>({...p,quality_references_comments:e.target.value}))} placeholder="Enter comments here..." />
+                        </div>
+                      </div>
+                    )
+                  },
+                  {
+                    id: "figures",
+                    label: "10. Figures and Tables",
+                    content: (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Evaluate:</Label>
+                          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                            <table className="w-full text-sm text-left text-slate-500 border-collapse">
+                              <thead className="text-xs text-slate-700 bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                  <th className="px-4 py-3 font-semibold text-slate-900">Item</th>
+                                  <th className="px-4 py-3 text-center font-semibold text-slate-900 w-24">Yes</th>
+                                  <th className="px-4 py-3 text-center font-semibold text-slate-900 w-24">No</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-200">
+                                {[
+                                  { key: "quality_figures_high_quality", label: "High quality" },
+                                  { key: "quality_figures_numbering", label: "Proper numbering" },
+                                  { key: "quality_figures_captions", label: "Appropriate captions" },
+                                  { key: "quality_figures_readable", label: "Readable" },
+                                  { key: "quality_figures_necessary", label: "Necessary" },
+                                ].map((row) => (
+                                  <tr key={row.key} className="bg-white hover:bg-slate-50/50">
+                                    <td className="px-4 py-2.5 font-medium text-slate-900">{row.label}</td>
+                                    {["Yes", "No"].map((val) => (
+                                      <td key={val} className="px-4 py-2.5 text-center">
+                                        <input
+                                          type="radio"
+                                          name={row.key}
+                                          value={val}
+                                          checked={reviewForm[row.key as keyof typeof reviewForm] === val}
+                                          onChange={(e)=>setReviewForm((p)=>({...p,[row.key]:e.target.value}))}
+                                          className="h-4 w-4 text-jostum-600 border-slate-300 focus:ring-jostum-500 cursor-pointer"
+                                        />
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Comments</Label>
+                          <Textarea rows={3} value={reviewForm.quality_figures_comments} onChange={(e)=>setReviewForm((p)=>({...p,quality_figures_comments:e.target.value}))} placeholder="Enter comments here..." />
+                        </div>
+                      </div>
+                    )
+                  },
+                  {
+                    id: "language",
+                    label: "11. Language Assessment",
+                    content: (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Please rate:</Label>
+                          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                            <table className="w-full text-sm text-left text-slate-500 border-collapse">
+                              <thead className="text-xs text-slate-700 bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                  <th className="px-4 py-3 font-semibold text-slate-900">Criterion</th>
+                                  {["Excellent", "Good", "Fair", "Poor"].map((opt) => (
+                                    <th key={opt} className="px-4 py-3 text-center font-semibold text-slate-900 w-24">{opt}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-200">
+                                {[
+                                  { key: "quality_language_grammar", label: "Grammar" },
+                                  { key: "quality_language_english", label: "English Quality" },
+                                  { key: "quality_language_organization", label: "Organization" },
+                                  { key: "quality_language_clarity", label: "Clarity" },
+                                ].map((row) => (
+                                  <tr key={row.key} className="bg-white hover:bg-slate-50/50">
+                                    <td className="px-4 py-2.5 font-medium text-slate-900">{row.label}</td>
+                                    {["Excellent", "Good", "Fair", "Poor"].map((val) => (
+                                      <td key={val} className="px-4 py-2.5 text-center">
+                                        <input
+                                          type="radio"
+                                          name={row.key}
+                                          value={val}
+                                          checked={reviewForm[row.key as keyof typeof reviewForm] === val}
+                                          onChange={(e)=>setReviewForm((p)=>({...p,[row.key]:e.target.value}))}
+                                          className="h-4 w-4 text-jostum-600 border-slate-300 focus:ring-jostum-500 cursor-pointer"
+                                        />
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Comments</Label>
+                          <Textarea rows={3} value={reviewForm.quality_language_comments} onChange={(e)=>setReviewForm((p)=>({...p,quality_language_comments:e.target.value}))} placeholder="Enter comments here..." />
+                        </div>
+                      </div>
+                    )
+                  },
+                  {
+                    id: "ethics",
+                    label: "12. Ethical Compliance",
+                    content: (
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Please indicate whether the manuscript complies with the following:</Label>
+                          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                            <table className="w-full text-sm text-left text-slate-500 border-collapse">
+                              <thead className="text-xs text-slate-700 bg-slate-50 border-b border-slate-200">
+                                <tr>
+                                  <th className="px-4 py-3 font-semibold text-slate-900">Item</th>
+                                  {["Yes", "No", "N/A"].map((opt) => (
+                                    <th key={opt} className="px-4 py-3 text-center font-semibold text-slate-900 w-20">{opt}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-200">
+                                {[
+                                  { key: "quality_ethical_no_plagiarism", label: "No plagiarism detected" },
+                                  { key: "quality_ethical_citations", label: "Proper citations" },
+                                  { key: "quality_ethical_approval", label: "Ethical approval obtained" },
+                                  { key: "quality_ethical_conflict", label: "Conflict of interest declared" },
+                                  { key: "quality_ethical_applicable", label: "Human/Animal ethics applicable" },
+                                ].map((row) => (
+                                  <tr key={row.key} className="bg-white hover:bg-slate-50/50">
+                                    <td className="px-4 py-2.5 font-medium text-slate-900">{row.label}</td>
+                                    {["Yes", "No", "N/A"].map((val) => (
+                                      <td key={val} className="px-4 py-2.5 text-center">
+                                        <input
+                                          type="radio"
+                                          name={row.key}
+                                          value={val}
+                                          checked={reviewForm[row.key as keyof typeof reviewForm] === val}
+                                          onChange={(e)=>setReviewForm((p)=>({...p,[row.key]:e.target.value}))}
+                                          className="h-4 w-4 text-jostum-600 border-slate-300 focus:ring-jostum-500 cursor-pointer"
+                                        />
+                                      </td>
+                                    ))}
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-slate-700">Comments</Label>
+                          <Textarea rows={3} value={reviewForm.quality_ethical_comments} onChange={(e)=>setReviewForm((p)=>({...p,quality_ethical_comments:e.target.value}))} placeholder="Enter comments here..." />
+                        </div>
+                      </div>
+                    )
+                  }
+                ].map((sec) => {
+                  const isOpen = openSectionC === sec.id
+                  return (
+                    <div key={sec.id} className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setOpenSectionC(isOpen ? "" : sec.id)}
+                        className="flex w-full items-center justify-between bg-slate-50/60 px-5 py-3 text-left font-medium text-slate-800 hover:bg-slate-100/50 transition-colors"
+                      >
+                        <span className="text-sm font-semibold text-slate-700">{sec.label}</span>
+                        <ChevronDown className={cn("h-4 w-4 text-slate-500 transition-transform duration-200", isOpen && "rotate-180")} />
+                      </button>
+                      {isOpen ? <div className="p-5 border-t border-slate-100 bg-white space-y-4">{sec.content}</div> : null}
+                    </div>
+                  )
+                })}
+              </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2"><Label>Ethical concerns</Label><Textarea rows={4} value={reviewForm.ethical_concerns} onChange={(e)=>setReviewForm((p)=>({...p,ethical_concerns:e.target.value}))} /></div>
-            <div className="space-y-2"><Label>Suspected plagiarism</Label><Textarea rows={4} value={reviewForm.suspected_plagiarism} onChange={(e)=>setReviewForm((p)=>({...p,suspected_plagiarism:e.target.value}))} /></div>
-            <div className="space-y-2"><Label>Recommendation justification</Label><Textarea rows={4} value={reviewForm.recommendation_justification} onChange={(e)=>setReviewForm((p)=>({...p,recommendation_justification:e.target.value}))} /></div>
-            <div className="space-y-2"><Label>Publication risk concerns</Label><Textarea rows={4} value={reviewForm.publication_risk_concerns} onChange={(e)=>setReviewForm((p)=>({...p,publication_risk_concerns:e.target.value}))} /></div>
-            <div className="space-y-2 md:col-span-2"><Label>Confidential Comments to Editor</Label><Textarea rows={6} value={reviewForm.confidential_comments} onChange={(e)=>setReviewForm((p)=>({...p,confidential_comments:e.target.value}))} /></div>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-sm font-semibold text-slate-900">Ethical Compliance Checklist</p>
-            <div className="grid gap-3 md:grid-cols-2">
-              {[
-                ["possible_plagiarism_detected", "Possible plagiarism detected"],
-                ["ai_generated_content_suspected", "AI-generated content suspected"],
-                ["fabricated_data_concerns", "Fabricated data concerns"],
-                ["ethical_approval_missing", "Ethical approval missing"],
-                ["citation_manipulation", "Citation manipulation"],
-                ["duplicate_publication_suspicion", "Duplicate publication suspicion"],
-              ].map(([key, label]) => <label key={key} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"><input type="checkbox" checked={Boolean(reviewForm[key as keyof typeof reviewForm])} onChange={(event)=>setReviewForm((prev)=>({...prev,[key]:event.target.checked}))} />{label}</label>)}
+              <div className="flex justify-between pt-6 border-t border-slate-100 mt-6">
+                <Button type="button" variant="outline" onClick={() => setFormTab("general")}>Previous</Button>
+                <Button type="button" onClick={() => setFormTab("strengths")}>Next Step</Button>
+              </div>
             </div>
-          </div>
+          )}
 
-          <div className="space-y-2">
-            <Label>Screenshot attachment</Label>
-            <Input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" onChange={(e)=>setReviewScreenshot(e.target.files?.[0] ?? null)} />
-          </div>
+          {/* TAB 4: Strengths & Revisions */}
+          {formTab === "strengths" && (
+            <div className="space-y-6">
+              <div className="space-y-3">
+                <p className="font-bold text-slate-800 text-sm tracking-wide">Major Strengths (Optional)</p>
+                <div className="space-y-3">
+                  {[
+                    { key: "strength_1", label: "1." },
+                    { key: "strength_2", label: "2." },
+                    { key: "strength_3", label: "3." }
+                  ].map((item) => (
+                    <div key={item.key} className="flex gap-3 items-center">
+                      <span className="text-sm font-semibold text-slate-500 w-4">{item.label}</span>
+                      <Input
+                        value={reviewForm[item.key as keyof typeof reviewForm] as string}
+                        onChange={(e)=>setReviewForm((p)=>({...p,[item.key]:e.target.value}))}
+                        placeholder={`Enter major strength ${item.label.replace('.', '')} (Optional)`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-          <div className="space-y-2">
-            <Label>Recommendation</Label>
-            <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={reviewForm.recommendation} onChange={(e)=>setReviewForm((p)=>({...p,recommendation:e.target.value}))}>{reviewerDecisionOptions.map((option)=><option key={option.value} value={option.value}>{option.label}</option>)}</select>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button type="button" variant="outline" onClick={saveReviewDraft}>Save Draft</Button>
-            <Button type="button" variant="outline" onClick={()=>setReviewPreviewOpen(true)}>Preview Evaluation</Button>
-            <Button type="button" variant="outline" onClick={()=>void requestReviewExtension()}>Request Extension</Button>
-            <Button type="button" variant="outline" onClick={()=>void declineSelectedReview()}>Decline Review</Button>
-            <Button type="submit" disabled={saving}>{saving ? "Submitting..." : "Submit Review"}</Button>
-          </div>
-          {reviewPreviewOpen ? createPortal(<div className="fixed inset-0 z-[160] bg-slate-950/50 p-4" onClick={()=>setReviewPreviewOpen(false)}><div className="mx-auto mt-12 max-h-[80vh] max-w-3xl overflow-auto rounded-2xl bg-white p-5 shadow-2xl" onClick={(event)=>event.stopPropagation()}><div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-lg font-semibold text-slate-950">Evaluation Preview</p><p className="text-sm text-slate-500">{String(selectedReviewManuscript?.title ?? "No manuscript selected")} | {totalReviewScore}/110 ({reviewPercent}%)</p></div><Button type="button" variant="outline" onClick={()=>setReviewPreviewOpen(false)}>Close</Button></div><div className="space-y-4 text-sm text-slate-700"><p><span className="font-semibold text-slate-950">Recommendation:</span> {String(reviewForm.recommendation)}</p><p><span className="font-semibold text-slate-950">Strengths:</span> {reviewForm.comments_strengths || "Not entered"}</p><p><span className="font-semibold text-slate-950">Weaknesses:</span> {reviewForm.comments_weaknesses || "Not entered"}</p><p><span className="font-semibold text-slate-950">Confidential notes:</span> {reviewForm.confidential_comments || "Not entered"}</p><Table rows={reviewCriteria.map((criteria)=>({ criteria: criteria.label, score: reviewForm[criteria.key] }))} /></div></div></div>, document.body) : null}
+              <div className="space-y-3 mt-6">
+                <p className="font-bold text-slate-800 text-sm tracking-wide">Major Weaknesses (Optional)</p>
+                <div className="space-y-3">
+                  {[
+                    { key: "weakness_1", label: "1." },
+                    { key: "weakness_2", label: "2." },
+                    { key: "weakness_3", label: "3." }
+                  ].map((item) => (
+                    <div key={item.key} className="flex gap-3 items-center">
+                      <span className="text-sm font-semibold text-slate-500 w-4">{item.label}</span>
+                      <Input
+                        value={reviewForm[item.key as keyof typeof reviewForm] as string}
+                        onChange={(e)=>setReviewForm((p)=>({...p,[item.key]:e.target.value}))}
+                        placeholder={`Enter major weakness ${item.label.replace('.', '')} (Optional)`}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 mt-6 pt-6 border-t border-slate-200">
+                <div className="space-y-2">
+                  <Label>Detailed Comments for the Authors: Major Revisions Required (Optional)</Label>
+                  <Textarea rows={6} value={reviewForm.comments_major_revisions} onChange={(e)=>setReviewForm((p)=>({...p,comments_major_revisions:e.target.value}))} placeholder="List major revisions here (Optional)..." />
+                </div>
+                <div className="space-y-2">
+                  <Label>Detailed Comments for the Authors: Minor Revisions Required (Optional)</Label>
+                  <Textarea rows={6} value={reviewForm.comments_minor_revisions} onChange={(e)=>setReviewForm((p)=>({...p,comments_minor_revisions:e.target.value}))} placeholder="List minor revisions here (Optional)..." />
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-6 border-t border-slate-100 mt-6">
+                <Button type="button" variant="outline" onClick={() => setFormTab("quality")}>Previous</Button>
+                <Button type="button" onClick={() => setFormTab("score")}>Next Step</Button>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 5: Score & Submit */}
+          {formTab === "score" && (
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <Label>Confidential Comments to the Editor (Not visible to the authors)</Label>
+                <Textarea rows={6} value={reviewForm.confidential_comments} onChange={(e)=>setReviewForm((p)=>({...p,confidential_comments:e.target.value}))} placeholder="Enter private comments for the editors here..." />
+              </div>
+
+              <div className="space-y-4 pt-4 border-t border-slate-200">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="font-bold text-slate-800 text-sm tracking-wide">Overall Score (Out of 10 for each)</p>
+                  <div className="rounded-xl bg-slate-100 px-4 py-2 border border-slate-200 text-sm font-semibold text-slate-900 shadow-sm">
+                    Total Score: {totalReviewScore} / 100 ({reviewPercent}%)
+                  </div>
+                </div>
+                
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {[
+                    { key: "score_originality", label: "Originality (1-10)" },
+                    { key: "score_technical_quality_10", label: "Technical Quality (1-10)" },
+                    { key: "score_methodology_10", label: "Methodology (1-10)" },
+                    { key: "score_literature_review_10", label: "Literature Review (1-10)" },
+                    { key: "score_experimental_design_10", label: "Experimental Design (1-10)" },
+                    { key: "score_results_10", label: "Results (1-10)" },
+                    { key: "score_discussion_10", label: "Discussion (1-10)" },
+                    { key: "score_conclusion_10", label: "Conclusion (1-10)" },
+                    { key: "score_language_10", label: "Language (1-10)" },
+                    { key: "score_contribution_10", label: "Overall Contribution (1-10)" },
+                  ].map((criteria) => (
+                    <div key={criteria.key} className="space-y-2">
+                      <Label>{criteria.label}</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={10}
+                        inputMode="numeric"
+                        value={String(reviewForm[criteria.key as keyof typeof reviewForm] || "")}
+                        onChange={(e) => {
+                          const raw = e.target.value
+                          if (raw === "") {
+                            setReviewForm((p) => ({ ...p, [criteria.key]: "" }))
+                            return
+                          }
+                          const capped = Math.max(1, Math.min(10, Number(raw)))
+                          setReviewForm((p) => ({ ...p, [criteria.key]: String(capped) }))
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-4 border-t border-slate-200">
+                <Label>Screenshot attachment (Optional)</Label>
+                <Input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" onChange={(e)=>setReviewScreenshot(e.target.files?.[0] ?? null)} />
+              </div>
+
+              <div className="space-y-2 pt-4 border-t border-slate-200">
+                <Label>Recommendation Decision</Label>
+                <select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm font-medium" value={reviewForm.recommendation} onChange={(e)=>setReviewForm((p)=>({...p,recommendation:e.target.value}))}>
+                  {reviewerDecisionOptions.map((option)=><option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </div>
+
+              <div className="flex flex-wrap gap-3 pt-6 border-t border-slate-200 justify-end">
+                <Button type="button" variant="outline" onClick={() => setFormTab("strengths")}>Previous</Button>
+                <Button type="button" variant="outline" onClick={saveReviewDraft}>Save Draft</Button>
+                <Button type="button" variant="outline" onClick={()=>setReviewPreviewOpen(true)}>Preview Evaluation</Button>
+                <Button type="button" variant="outline" onClick={()=>void requestReviewExtension()}>Request Extension</Button>
+                <Button type="button" variant="outline" onClick={()=>void declineSelectedReview()}>Decline Review</Button>
+                <Button type="submit" disabled={saving}>{saving ? "Submitting..." : "Submit Review"}</Button>
+              </div>
+            </div>
+          )}
+
+          {reviewPreviewOpen ? createPortal(
+            <div className="fixed inset-0 z-[160] bg-slate-950/50 p-4 flex items-center justify-center" onClick={()=>setReviewPreviewOpen(false)}>
+              <div className="mx-auto max-h-[90vh] w-full max-w-4xl overflow-auto rounded-2xl bg-white p-6 shadow-2xl" onClick={(event)=>event.stopPropagation()}>
+                <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+                  <div>
+                    <p className="text-lg font-semibold text-slate-950">Evaluation Form Preview</p>
+                    <p className="text-sm text-slate-500">
+                      {String(selectedReviewManuscript?.title ?? "No manuscript selected")} | Score: {totalReviewScore}/100 ({reviewPercent}%)
+                    </p>
+                  </div>
+                  <Button type="button" variant="outline" onClick={()=>setReviewPreviewOpen(false)}>Close Preview</Button>
+                </div>
+                <div className="space-y-6 text-sm text-slate-700">
+                  <div>
+                    <p className="font-semibold text-slate-950 mb-1">Recommendation:</p>
+                    <p className="bg-slate-50 p-2.5 rounded-lg border border-slate-100 font-medium capitalize text-slate-900">
+                      {String(reviewForm.recommendation).replaceAll("_", " ")}
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <p className="font-semibold text-slate-950 mb-2">Report Content (Visible to Authors & Editor):</p>
+                    <pre className="whitespace-pre-wrap font-sans bg-slate-50 p-4 rounded-xl border border-slate-200 max-h-96 overflow-auto text-slate-800 leading-relaxed text-xs">
+                      {buildCommentsToAuthor(reviewForm)}
+                    </pre>
+                  </div>
+
+                  <div>
+                    <p className="font-semibold text-slate-950 mb-2">Confidential Comments to Editor (Not visible to authors):</p>
+                    <p className="whitespace-pre-wrap bg-slate-50 p-4 rounded-xl border border-slate-200 text-slate-800 text-xs">
+                      {reviewForm.confidential_comments || "None entered."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>, 
+            document.body
+          ) : null}
         </form>
       </CardContent>
     </Card>
@@ -2973,6 +4209,7 @@ function ReviewerPanels({ section, workspace, onSaved }: { section: string; work
   </div>
   return <Card className="border-white/70 bg-white/85 backdrop-blur"><CardHeader><CardTitle>Assigned Manuscripts</CardTitle><CardDescription>Author identities remain hidden. Review only the manuscript content, files, and editorial instructions.</CardDescription></CardHeader><CardContent><Table rows={acceptedInvitations} /></CardContent></Card>
 }
+
 function EditorOnboardingCard({ onboarding, user, onSaved }: { onboarding?: NonNullable<WorkspacePayload["editor"]>["onboarding"]; user: AuthUser; onSaved: () => Promise<void> }) {
   const application = onboarding?.application ?? {}
   const [step, setStep] = React.useState(1)
