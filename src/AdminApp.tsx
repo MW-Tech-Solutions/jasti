@@ -5290,7 +5290,7 @@ function EicPanels({ section, workspace, onSaved }: { section: string; workspace
 }
 function AdminUsersPanel({ workspace, onSaved }: { workspace: WorkspacePayload; onSaved: () => Promise<void> }) {
   const users = asArray(workspace.admin?.users)
-  const [form, setForm] = React.useState({ user_id: "", role: "reviewer", status: "active" })
+  const [form, setForm] = React.useState({ user_id: "", role: "reviewer", status: "active", skip_onboarding: true })
   const [saving, setSaving] = React.useState(false)
   const [showCreateModal, setShowCreateModal] = React.useState(false)
   const [creating, setCreating] = React.useState(false)
@@ -5382,7 +5382,12 @@ function AdminUsersPanel({ workspace, onSaved }: { workspace: WorkspacePayload; 
                 e.preventDefault()
                 setSaving(true)
                 try {
-                  await updateUserAccess({ user_id: Number(form.user_id), role: form.role, status: form.status })
+                  await updateUserAccess({
+                    user_id: Number(form.user_id),
+                    role: form.role,
+                    status: form.status,
+                    skip_onboarding: form.skip_onboarding
+                  })
                   await onSaved()
                   toast.success("User access updated.")
                 } catch (error) {
@@ -5399,6 +5404,61 @@ function AdminUsersPanel({ workspace, onSaved }: { workspace: WorkspacePayload; 
                   {users.map((entry) => <option key={String(entry.user_id)} value={String(entry.user_id)}>{String(entry.first_name ?? "")} {String(entry.last_name ?? "")} ({String(entry.email ?? "")})</option>)}
                 </select>
               </div>
+
+              {form.user_id ? (() => {
+                const selectedUser = users.find((u) => String(u.user_id) === form.user_id);
+                if (!selectedUser) return null;
+                const rolesArray = asArray(selectedUser.roles);
+                return (
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 space-y-2">
+                    <Label className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Allocated Roles (Click X to Remove)</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {rolesArray.map((roleNameStr) => {
+                        const roleName = String(roleNameStr);
+                        return (
+                          <span
+                            key={roleName}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-jostum-50 px-3 py-1 text-xs font-semibold text-jostum-850 border border-jostum-150"
+                          >
+                            {roleName}
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (rolesArray.length <= 1) {
+                                  toast.error("Cannot remove the only remaining role. A user must have at least one role.");
+                                  return;
+                                }
+                                if (!window.confirm(`Are you sure you want to remove the '${roleName}' role from this user?`)) {
+                                  return;
+                                }
+                                setSaving(true);
+                                try {
+                                  await updateUserAccess({
+                                    user_id: Number(form.user_id),
+                                    role: roleName,
+                                    action: "remove_role"
+                                  });
+                                  await onSaved();
+                                  toast.success(`Role '${roleName}' removed successfully.`);
+                                } catch (err) {
+                                  toast.error(errorText(err, "Unable to remove role."));
+                                } finally {
+                                  setSaving(false);
+                                }
+                              }}
+                              className="ml-1 rounded-full p-0.5 hover:bg-jostum-100 text-jostum-600 hover:text-jostum-850 focus:outline-none"
+                              title={`Remove ${roleName} role`}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })() : null}
+
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Assign role</Label>
@@ -5418,6 +5478,23 @@ function AdminUsersPanel({ workspace, onSaved }: { workspace: WorkspacePayload; 
                   </select>
                 </div>
               </div>
+
+              {["reviewer", "editor", "managing_editor", "section_editor", "technical_editor", "advisory_board", "editor_in_chief"].includes(form.role) ? (
+                <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={form.skip_onboarding}
+                    onChange={(e) => setForm((p) => ({ ...p, skip_onboarding: e.target.checked }))}
+                  />
+                  <span>
+                    <span className="font-semibold text-slate-900">Pre-approve/Skip Onboarding for this role</span>
+                    <br />
+                    Bypasses CV submission and onboarding qualifications so the user can immediately perform duties.
+                  </span>
+                </label>
+              ) : null}
+
               <Button type="submit" disabled={saving}>{saving ? "Saving..." : "Update user role"}</Button>
             </form>
           </CardContent>
