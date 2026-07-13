@@ -5294,11 +5294,21 @@ function AdminUsersPanel({ workspace, onSaved }: { workspace: WorkspacePayload; 
   const [saving, setSaving] = React.useState(false)
   const [showCreateModal, setShowCreateModal] = React.useState(false)
   const [creating, setCreating] = React.useState(false)
-  const [createForm, setCreateForm] = React.useState({ first_name: "", last_name: "", email: "", password: "", institution: "", country: "", phone: "", orcid_id: "", role: "author", status: "active", expertise_area: "" })
+  const [createForm, setCreateForm] = React.useState({ first_name: "", last_name: "", email: "", password: "", institution: "", country: "", phone: "", orcid_id: "", role: "author", status: "active", expertise_area: "", skip_onboarding: true })
   const [editingUser, setEditingUser] = React.useState<Record<string, unknown> | null>(null)
   const [editSaving, setEditSaving] = React.useState(false)
   const [editForm, setEditForm] = React.useState({ user_id: "", first_name: "", last_name: "", email: "", institution: "", country: "", phone: "", orcid_id: "", status: "active" })
   const { countryOptions, countriesLoading, countryLookupFailed } = useCountryOptions()
+  const [createdCredentials, setCreatedCredentials] = React.useState<{ first_name: string; last_name: string; email: string; password: string; role: string } | null>(null)
+
+  const generateRandomPassword = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
+    let pass = ""
+    for (let i = 0; i < 12; i++) {
+      pass += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+    return pass
+  }
 
   const verifiedUsers = users.filter((entry) => String(entry.email_verification_status ?? "") === "verified").length
   const unverifiedUsers = users.length - verifiedUsers
@@ -5489,9 +5499,299 @@ function AdminUsersPanel({ workspace, onSaved }: { workspace: WorkspacePayload; 
         </Card>
       </div>
 
-      {showCreateModal ? <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/50 p-4"><div className="w-full max-w-3xl rounded-3xl border border-white/70 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between gap-4"><div><h3 className="display-modal text-slate-950">Create New User</h3><p className="mt-2 text-sm text-slate-600">Add any publishing account, from author and reviewer through the editorial chain to administrator, from one modal form.</p></div><button type="button" onClick={()=>setShowCreateModal(false)} className="rounded-full border border-slate-200 px-3 py-1 text-sm font-medium text-slate-600 hover:bg-slate-50">Close</button></div><form className="mt-6 grid gap-4 md:grid-cols-2" onSubmit={async (e)=>{e.preventDefault(); setCreating(true); try { await createAdminUser(createForm); toast.success("User created successfully."); setShowCreateModal(false); setCreateForm({ first_name: "", last_name: "", email: "", password: "", institution: "", country: "", phone: "", orcid_id: "", role: "author", status: "active", expertise_area: "" }); await onSaved() } catch (error) { toast.error(errorText(error, "Unable to create user.")) } finally { setCreating(false) } }}><div className="space-y-2"><Label>First name</Label><Input value={createForm.first_name} onChange={(e)=>setCreateForm((p)=>({...p,first_name:e.target.value}))} required /></div><div className="space-y-2"><Label>Last name</Label><Input value={createForm.last_name} onChange={(e)=>setCreateForm((p)=>({...p,last_name:e.target.value}))} required /></div><div className="space-y-2 md:col-span-2"><Label>Email</Label><Input type="email" value={createForm.email} onChange={(e)=>setCreateForm((p)=>({...p,email:e.target.value}))} required /></div><div className="space-y-2"><Label>Password</Label><Input type="password" minLength={8} value={createForm.password} onChange={(e)=>setCreateForm((p)=>({...p,password:e.target.value}))} required /></div><div className="space-y-2"><Label>Role</Label><select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={createForm.role} onChange={(e)=>setCreateForm((p)=>({...p,role:e.target.value}))}>{userRoleOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></div><div className="space-y-2"><Label>Status</Label><select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={createForm.status} onChange={(e)=>setCreateForm((p)=>({...p,status:e.target.value}))}><option value="active">Active</option><option value="inactive">Inactive</option></select></div><div className="space-y-2"><Label>Institution</Label><Input value={createForm.institution} onChange={(e)=>setCreateForm((p)=>({...p,institution:e.target.value}))} /></div><CountrySelectField label="Country" value={createForm.country} onChange={(value)=>setCreateForm((p)=>({...p,country:value}))} countryOptions={countryOptions} countriesLoading={countriesLoading} countryLookupFailed={countryLookupFailed} /><div className="space-y-2"><Label>Phone</Label><Input value={createForm.phone} onChange={(e)=>setCreateForm((p)=>({...p,phone:e.target.value}))} /></div><div className="space-y-2"><Label>ORCID</Label><Input value={createForm.orcid_id} onChange={(e)=>setCreateForm((p)=>({...p,orcid_id:e.target.value}))} /></div>{createForm.role === "reviewer" ? <div className="space-y-2 md:col-span-2"><Label>Expertise area</Label><Textarea rows={4} value={createForm.expertise_area} onChange={(e)=>setCreateForm((p)=>({...p,expertise_area:e.target.value}))} /></div> : null}<div className="md:col-span-2 flex justify-end gap-3"><Button type="button" variant="outline" onClick={()=>setShowCreateModal(false)}>Cancel</Button><Button type="submit" disabled={creating}>{creating ? "Creating..." : "Create user"}</Button></div></form></div></div> : null}
+      {showCreateModal ? (
+        <div className="fixed inset-0 z-[260] flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/70 bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="display-modal text-slate-950">Create New User</h3>
+                <p className="mt-2 text-sm text-slate-600">Add any publishing account, from author and reviewer through the editorial chain to administrator, from one modal form.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setCreatedCredentials(null);
+                  setShowCreateModal(false);
+                }}
+                className="rounded-full border border-slate-200 px-3 py-1 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                Close
+              </button>
+            </div>
 
-      {editingUser ? <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/50 p-4"><div className="w-full max-w-3xl rounded-3xl border border-white/70 bg-white p-6 shadow-2xl"><div className="flex items-start justify-between gap-4"><div><h3 className="display-modal text-slate-950">Edit User</h3><p className="mt-2 text-sm text-slate-600">Update basic user information directly from current users.</p></div><button type="button" onClick={()=>setEditingUser(null)} className="rounded-full border border-slate-200 px-3 py-1 text-sm font-medium text-slate-600 hover:bg-slate-50">Close</button></div><form className="mt-6 grid gap-4 md:grid-cols-2" onSubmit={async (e)=>{e.preventDefault(); setEditSaving(true); try { await editAdminUser({ ...editForm, user_id: Number(editForm.user_id) }); await onSaved(); toast.success("User updated."); setEditingUser(null) } catch (error) { toast.error(errorText(error, "Unable to edit user.")) } finally { setEditSaving(false) } }}><div className="space-y-2"><Label>First name</Label><Input value={editForm.first_name} onChange={(e)=>setEditForm((p)=>({...p, first_name: e.target.value}))} required /></div><div className="space-y-2"><Label>Last name</Label><Input value={editForm.last_name} onChange={(e)=>setEditForm((p)=>({...p, last_name: e.target.value}))} required /></div><div className="space-y-2 md:col-span-2"><Label>Email</Label><Input type="email" value={editForm.email} onChange={(e)=>setEditForm((p)=>({...p, email: e.target.value}))} required /></div><div className="space-y-2"><Label>Institution</Label><Input value={editForm.institution} onChange={(e)=>setEditForm((p)=>({...p, institution: e.target.value}))} /></div><CountrySelectField label="Country" value={editForm.country} onChange={(value)=>setEditForm((p)=>({...p, country:value}))} countryOptions={countryOptions} countriesLoading={countriesLoading} countryLookupFailed={countryLookupFailed} /><div className="space-y-2"><Label>Phone</Label><Input value={editForm.phone} onChange={(e)=>setEditForm((p)=>({...p, phone: e.target.value}))} /></div><div className="space-y-2"><Label>ORCID</Label><Input value={editForm.orcid_id} onChange={(e)=>setEditForm((p)=>({...p, orcid_id: e.target.value}))} /></div><div className="space-y-2"><Label>Status</Label><select className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm" value={editForm.status} onChange={(e)=>setEditForm((p)=>({...p, status: e.target.value}))}><option value="active">Active</option><option value="inactive">Inactive</option></select></div><div className="md:col-span-2 flex justify-end gap-3"><Button type="button" variant="outline" onClick={()=>setEditingUser(null)}>Cancel</Button><Button type="submit" disabled={editSaving}>{editSaving ? "Saving..." : "Save user"}</Button></div></form></div></div> : null}
+            {createdCredentials ? (
+              <div className="mt-6 space-y-5">
+                <div className="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-5 text-emerald-800">
+                  <h4 className="font-semibold text-emerald-900 flex items-center gap-2">
+                    <svg className="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    User Account Created Successfully!
+                  </h4>
+                  <p className="mt-1 text-sm">
+                    A confirmation email has been dispatched to <strong>{createdCredentials.email}</strong>.
+                    You can copy the account details below to share directly with the user.
+                  </p>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Copyable credentials</Label>
+                  <div className="relative rounded-2xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm whitespace-pre-wrap select-all">
+                    {`Dear ${createdCredentials.first_name} ${createdCredentials.last_name},\n\nYour JASTI account has been successfully created.\n\nLogin URL: ${window.location.origin}/login\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.password}\nRole: ${createdCredentials.role}\n\nBest regards,\nJASTI Editorial Office`}
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const text = `Dear ${createdCredentials.first_name} ${createdCredentials.last_name},\n\nYour JASTI account has been successfully created.\n\nLogin URL: ${window.location.origin}/login\nEmail: ${createdCredentials.email}\nPassword: ${createdCredentials.password}\nRole: ${createdCredentials.role}\n\nBest regards,\nJASTI Editorial Office`;
+                      navigator.clipboard.writeText(text);
+                      toast.success("Credentials copied to clipboard!");
+                    }}
+                  >
+                    Copy Credentials
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setCreatedCredentials(null);
+                      setShowCreateModal(false);
+                    }}
+                  >
+                    Done
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <form
+                className="mt-6 grid gap-4 md:grid-cols-2"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  setCreating(true);
+                  try {
+                    await createAdminUser(createForm);
+                    toast.success("User created successfully.");
+                    setCreatedCredentials({
+                      first_name: createForm.first_name,
+                      last_name: createForm.last_name,
+                      email: createForm.email,
+                      password: createForm.password,
+                      role: createForm.role,
+                    });
+                    setCreateForm({
+                      first_name: "",
+                      last_name: "",
+                      email: "",
+                      password: "",
+                      institution: "",
+                      country: "",
+                      phone: "",
+                      orcid_id: "",
+                      role: "author",
+                      status: "active",
+                      expertise_area: "",
+                      skip_onboarding: true,
+                    });
+                    await onSaved();
+                  } catch (error) {
+                    toast.error(errorText(error, "Unable to create user."));
+                  } finally {
+                    setCreating(false);
+                  }
+                }}
+              >
+                <div className="space-y-2">
+                  <Label>First name</Label>
+                  <Input value={createForm.first_name} onChange={(e) => setCreateForm((p) => ({ ...p, first_name: e.target.value }))} required />
+                </div>
+                <div className="space-y-2">
+                  <Label>Last name</Label>
+                  <Input value={createForm.last_name} onChange={(e) => setCreateForm((p) => ({ ...p, last_name: e.target.value }))} required />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Email</Label>
+                  <Input type="email" value={createForm.email} onChange={(e) => setCreateForm((p) => ({ ...p, email: e.target.value }))} required />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Password</Label>
+                    <button
+                      type="button"
+                      onClick={() => setCreateForm((p) => ({ ...p, password: generateRandomPassword() }))}
+                      className="text-xs font-semibold text-jostum-600 hover:underline"
+                    >
+                      Generate Password
+                    </button>
+                  </div>
+                  <Input
+                    type="text"
+                    minLength={8}
+                    value={createForm.password}
+                    onChange={(e) => setCreateForm((p) => ({ ...p, password: e.target.value }))}
+                    required
+                    placeholder="Min 8 characters or click generate"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Role</Label>
+                  <select
+                    className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                    value={createForm.role}
+                    onChange={(e) => setCreateForm((p) => ({ ...p, role: e.target.value }))}
+                  >
+                    {userRoleOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <select
+                    className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                    value={createForm.status}
+                    onChange={(e) => setCreateForm((p) => ({ ...p, status: e.target.value }))}
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+                <div className="space-y-2 select-none">
+                  <Label>Onboarding status</Label>
+                  <label className="flex h-10 w-full items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm cursor-pointer hover:bg-slate-50 transition">
+                    <input
+                      type="checkbox"
+                      checked={createForm.skip_onboarding}
+                      onChange={(e) => setCreateForm((p) => ({ ...p, skip_onboarding: e.target.checked }))}
+                      className="rounded border-slate-300 text-jostum-600 focus:ring-jostum-500 h-4 w-4"
+                    />
+                    <span className="text-slate-700">Pre-approve/Skip Onboarding</span>
+                  </label>
+                </div>
+                <div className="space-y-2">
+                  <Label>Institution</Label>
+                  <Input value={createForm.institution} onChange={(e) => setCreateForm((p) => ({ ...p, institution: e.target.value }))} />
+                </div>
+                <CountrySelectField
+                  label="Country"
+                  value={createForm.country}
+                  onChange={(value) => setCreateForm((p) => ({ ...p, country: value }))}
+                  countryOptions={countryOptions}
+                  countriesLoading={countriesLoading}
+                  countryLookupFailed={countryLookupFailed}
+                />
+                <div className="space-y-2">
+                  <Label>Phone</Label>
+                  <Input value={createForm.phone} onChange={(e) => setCreateForm((p) => ({ ...p, phone: e.target.value }))} />
+                </div>
+                <div className="space-y-2">
+                  <Label>ORCID</Label>
+                  <Input value={createForm.orcid_id} onChange={(e) => setCreateForm((p) => ({ ...p, orcid_id: e.target.value }))} />
+                </div>
+                {createForm.role === "reviewer" ? (
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>Expertise area</Label>
+                    <Textarea rows={4} value={createForm.expertise_area} onChange={(e) => setCreateForm((p) => ({ ...p, expertise_area: e.target.value }))} />
+                  </div>
+                ) : null}
+                <div className="md:col-span-2 flex justify-end gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setCreatedCredentials(null);
+                      setShowCreateModal(false);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={creating}>{creating ? "Creating..." : "Create user"}</Button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {editingUser ? (
+        <div className="fixed inset-0 z-[260] flex items-center justify-center bg-slate-950/50 p-4">
+          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/70 bg-white p-6 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="display-modal text-slate-950">Edit User</h3>
+                <p className="mt-2 text-sm text-slate-600">Update basic user information directly from current users.</p>
+              </div>
+              <button type="button" onClick={() => setEditingUser(null)} className="rounded-full border border-slate-200 px-3 py-1 text-sm font-medium text-slate-600 hover:bg-slate-50">Close</button>
+            </div>
+            <form
+              className="mt-6 grid gap-4 md:grid-cols-2"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setEditSaving(true);
+                try {
+                  await editAdminUser({ ...editForm, user_id: Number(editForm.user_id) });
+                  await onSaved();
+                  toast.success("User updated.");
+                  setEditingUser(null);
+                } catch (error) {
+                  toast.error(errorText(error, "Unable to edit user."));
+                } finally {
+                  setEditSaving(false);
+                }
+              }}
+            >
+              <div className="space-y-2">
+                <Label>First name</Label>
+                <Input value={editForm.first_name} onChange={(e) => setEditForm((p) => ({ ...p, first_name: e.target.value }))} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Last name</Label>
+                <Input value={editForm.last_name} onChange={(e) => setEditForm((p) => ({ ...p, last_name: e.target.value }))} required />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Email</Label>
+                <Input type="email" value={editForm.email} onChange={(e) => setEditForm((p) => ({ ...p, email: e.target.value }))} required />
+              </div>
+              <div className="space-y-2">
+                <Label>Institution</Label>
+                <Input value={editForm.institution} onChange={(e) => setEditForm((p) => ({ ...p, institution: e.target.value }))} />
+              </div>
+              <CountrySelectField
+                label="Country"
+                value={editForm.country}
+                onChange={(value) => setEditForm((p) => ({ ...p, country: value }))}
+                countryOptions={countryOptions}
+                countriesLoading={countriesLoading}
+                countryLookupFailed={countryLookupFailed}
+              />
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input value={editForm.phone} onChange={(e) => setEditForm((p) => ({ ...p, phone: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>ORCID</Label>
+                <Input value={editForm.orcid_id} onChange={(e) => setEditForm((p) => ({ ...p, orcid_id: e.target.value }))} />
+              </div>
+              <div className="space-y-2">
+                <Label>Status</Label>
+                <select
+                  className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm"
+                  value={editForm.status}
+                  onChange={(e) => setEditForm((p) => ({ ...p, status: e.target.value }))}
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+              <div className="md:col-span-2 flex justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => setEditingUser(null)}>Cancel</Button>
+                <Button type="submit" disabled={editSaving}>{editSaving ? "Saving..." : "Save user"}</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </>
   )
 }
@@ -6241,7 +6541,23 @@ export default function AdminApp() {
       setWorkspace(normalizedWorkspace)
       setSettings(normalizedSettings)
       applyJournalBranding(normalizedSettings)
-      const firstRole = normalizedRoles[0] ?? ""
+      const rolePriority: Record<string, number> = {
+        admin: 10,
+        editor_in_chief: 9,
+        managing_editor: 8,
+        section_editor: 7,
+        technical_editor: 6,
+        advisory_board: 5,
+        editor: 4,
+        reviewer: 3,
+        author: 1,
+      }
+      const sortedRoles = [...normalizedRoles].sort((a, b) => {
+        const priorityA = rolePriority[a] ?? 0
+        const priorityB = rolePriority[b] ?? 0
+        return priorityB - priorityA
+      })
+      const firstRole = sortedRoles[0] ?? ""
       setActiveRole((current) => {
         if (requestedRole && normalizedRoles.includes(requestedRole)) {
           return requestedRole

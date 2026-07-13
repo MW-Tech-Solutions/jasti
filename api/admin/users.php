@@ -22,6 +22,7 @@ if (($data['action'] ?? '') === 'create') {
     $orcidId = trim((string) ($data['orcid_id'] ?? ''));
     $status = trim((string) ($data['status'] ?? 'active'));
     $roleName = jasti_normalize_role((string) ($data['role'] ?? 'author'));
+    $skipOnboarding = !empty($data['skip_onboarding']);
 
     if ($firstName === '' || $lastName === '' || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 8) {
         jasti_json(['message' => 'First name, last name, valid email, and password with at least 8 characters are required.'], 422);
@@ -71,6 +72,60 @@ if (($data['action'] ?? '') === 'create') {
                 'expertise_area' => trim((string) ($data['expertise_area'] ?? 'Reviewer expertise pending update')),
                 'availability_status' => 'available',
             ]);
+
+            if ($skipOnboarding) {
+                // Pre-create the reviewers table record as approved and completed
+                $pdo->prepare(
+                    'INSERT INTO reviewers (
+                        user_id, status, application_completed, first_name, last_name, email,
+                        country, institution, phone, orcid_id, preferred_review_time, bio
+                    ) VALUES (
+                        :user_id, "approved", 1, :first_name, :last_name, :email,
+                        :country, :institution, :phone, :orcid_id, "14", "Account created by Administrator."
+                    )'
+                )->execute([
+                    'user_id' => $targetUserId,
+                    'first_name' => $firstName,
+                    'last_name' => $lastName,
+                    'email' => $email,
+                    'country' => $country !== '' ? $country : null,
+                    'institution' => $institution !== '' ? $institution : null,
+                    'phone' => $phone !== '' ? $phone : null,
+                    'orcid_id' => $orcidId !== '' ? $orcidId : null,
+                ]);
+            }
+        }
+
+        $editorRoles = ['editor', 'managing_editor', 'section_editor', 'technical_editor', 'advisory_board', 'editor_in_chief'];
+        if (in_array($roleName, $editorRoles, true)) {
+            if ($skipOnboarding) {
+                $etName = $roleName === 'editor' ? 'editorial_board' : $roleName;
+                $et = jasti_editor_type_by_name($pdo, $etName);
+                if (!$et) {
+                    $et = jasti_editor_type_by_name($pdo, 'editorial_board');
+                }
+                if (!$et) {
+                    $etList = jasti_editor_types($pdo);
+                    if (!empty($etList)) {
+                        $et = $etList[0];
+                    }
+                }
+                if ($et) {
+                    jasti_create_editor_profile($pdo, $targetUserId, (int) $et['editor_type_id']);
+                    if (jasti_table_exists($pdo, 'editors')) {
+                        $pdo->prepare(
+                            'INSERT INTO editors (user_id, status, application_completed, first_name, last_name, email)
+                             VALUES (:user_id, "approved", 1, :first_name, :last_name, :email)
+                             ON DUPLICATE KEY UPDATE status="approved", application_completed=1'
+                        )->execute([
+                            'user_id' => $targetUserId,
+                            'first_name' => $firstName,
+                            'last_name' => $lastName,
+                            'email' => $email,
+                        ]);
+                    }
+                }
+            }
         }
 
         $pdo->commit();
@@ -81,8 +136,54 @@ if (($data['action'] ?? '') === 'create') {
         throw $exception;
     }
 
+    // Send email notification to user
+    $emailSent = false;
+    $emailError = null;
+    try {
+        $subject = 'Your JASTI Account Has Been Created';
+        $loginLink = jasti_frontend_url('login');
+        
+        $roleLabels = [
+            'author' => 'Author',
+            'reviewer' => 'Reviewer',
+            'editor' => 'Editor',
+            'managing_editor' => 'Managing Editor',
+            'section_editor' => 'Section Editor',
+            'technical_editor' => 'Technical Editor',
+            'advisory_board' => 'Advisory Board',
+            'editor_in_chief' => 'Editor-in-Chief',
+            'admin' => 'Administrator',
+        ];
+        $roleLabel = $roleLabels[$roleName] ?? ucfirst($roleName);
+        
+        $htmlBody = '
+        <p>Dear ' . htmlspecialchars($firstName . ' ' . $lastName, ENT_QUOTES, 'UTF-8') . ',</p>
+        <p>An account has been created for you on JASTI (Journal of Applied Science, Technology, and Innovation) by the system administrator.</p>
+        <p>Here are your login credentials:</p>
+        <ul>
+          <li><strong>Email:</strong> ' . htmlspecialchars($email, ENT_QUOTES, 'UTF-8') . '</li>
+          <li><strong>Password:</strong> ' . htmlspecialchars($password, ENT_QUOTES, 'UTF-8') . '</li>
+          <li><strong>Assigned Role:</strong> ' . htmlspecialchars($roleLabel, ENT_QUOTES, 'UTF-8') . '</li>
+        </ul>
+        <p>You can sign in to your dashboard here: <a href="' . htmlspecialchars($loginLink, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($loginLink, ENT_QUOTES, 'UTF-8') . '</a></p>
+        <p>Best regards,<br>JASTI Editorial Office</p>';
+
+        $altBody = "Dear " . ($firstName . ' ' . $lastName) . ",\n\nAn account has been created for you on JASTI. Here are your login credentials:\n\nEmail: {$email}\nPassword: {$password}\nAssigned Role: {$roleLabel}\n\nLogin URL: {$loginLink}\n\nBest regards,\nJASTI Editorial Office";
+
+        jasti_send_html_email($email, $subject, $htmlBody, $altBody);
+        $emailSent = true;
+    } catch (Throwable $exception) {
+        $emailError = $exception->getMessage();
+        error_log('Unable to send account creation email for ' . $email . ': ' . $emailError);
+    }
+
     jasti_log($pdo, $userId, 'created user', 'users', $targetUserId);
-    jasti_json(['message' => 'User created successfully.', 'users' => jasti_users_with_roles($pdo)]);
+    jasti_json([
+        'message' => 'User created successfully.',
+        'email_sent' => $emailSent,
+        'email_error' => $emailError,
+        'users' => jasti_users_with_roles($pdo)
+    ]);
 }
 
 if (($data['action'] ?? '') === 'edit') {
