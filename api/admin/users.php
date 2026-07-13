@@ -414,6 +414,7 @@ if (!empty($data['role'])) {
             ]);
         }
     }
+}
 
     jasti_log($pdo, $userId, 'updated user access', 'users', $targetUserId);
     jasti_json(['message' => 'User updated successfully.', 'users' => jasti_users_with_roles($pdo)]);
