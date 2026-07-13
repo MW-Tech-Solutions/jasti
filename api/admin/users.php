@@ -313,61 +313,106 @@ if (!empty($data['role'])) {
     jasti_assign_account_role($pdo, $targetUserId, $roleName);
     
     $skipOnboarding = !empty($data['skip_onboarding']);
+        // Fetch user details for profiles
+    $stmt = $pdo->prepare('SELECT first_name, last_name, email, country, institution, phone, orcid_id FROM users WHERE user_id = :user_id LIMIT 1');
+    $stmt->execute(['user_id' => $targetUserId]);
+    $targetUser = $stmt->fetch();
+    if ($targetUser) {
+        $userFirstName = $targetUser['first_name'];
+        $userLastName = $targetUser['last_name'];
+        $userEmail = $targetUser['email'];
+    } else {
+        $userFirstName = 'User';
+        $userLastName = 'Name';
+        $userEmail = '';
+    }
     
     if ($roleName === 'reviewer') {
         if ($skipOnboarding) {
-            $stmt = $pdo->prepare('SELECT email FROM users WHERE user_id = :user_id LIMIT 1');
-            $stmt->execute(['user_id' => $targetUserId]);
-            $userEmail = (string) ($stmt->fetchColumn() ?: '');
-
             $pdo->prepare(
-                'INSERT INTO reviewers (reviewer_id, email, status, application_completed, cv_file)
-                 VALUES (:reviewer_id, :email, "approved", 1, "")
+                'INSERT INTO reviewers (user_id, email, status, application_completed, first_name, last_name, cv_file, country, institution, phone, orcid_id, preferred_review_time, bio)
+                 VALUES (:user_id, :email, "approved", 1, :first_name, :last_name, "", :country, :institution, :phone, :orcid_id, "14", "Account created by Administrator.")
                  ON DUPLICATE KEY UPDATE status = "approved", application_completed = 1'
             )->execute([
-                'reviewer_id' => $targetUserId,
+                'user_id' => $targetUserId,
                 'email' => $userEmail,
+                'first_name' => $userFirstName,
+                'last_name' => $userLastName,
+                'country' => $targetUser['country'] ?? null,
+                'institution' => $targetUser['institution'] ?? null,
+                'phone' => $targetUser['phone'] ?? null,
+                'orcid_id' => $targetUser['orcid_id'] ?? null,
             ]);
 
             $pdo->prepare(
-                'INSERT INTO reviewer_profiles (reviewer_id, availability_status, bio, orcid_id)
-                 VALUES (:reviewer_id, "available", "Pre-approved bio.", "")
+                'INSERT INTO reviewer_profiles (reviewer_id, expertise_area, reviewer_rating, total_reviews, availability_status)
+                 VALUES (:reviewer_id, :expertise_area, 0.00, 0, "available")
                  ON DUPLICATE KEY UPDATE availability_status = "available"'
             )->execute([
                 'reviewer_id' => $targetUserId,
+                'expertise_area' => 'Reviewer expertise pending update',
             ]);
         } else {
             $pdo->prepare(
+                'INSERT INTO reviewers (user_id, email, status, application_completed, first_name, last_name, cv_file, country, institution, phone, orcid_id, preferred_review_time, bio)
+                 VALUES (:user_id, :email, "pending", 0, :first_name, :last_name, "", :country, :institution, :phone, :orcid_id, "14", "Account pending onboarding.")
+                 ON DUPLICATE KEY UPDATE status = "pending", application_completed = 0'
+            )->execute([
+                'user_id' => $targetUserId,
+                'email' => $userEmail,
+                'first_name' => $userFirstName,
+                'last_name' => $userLastName,
+                'country' => $targetUser['country'] ?? null,
+                'institution' => $targetUser['institution'] ?? null,
+                'phone' => $targetUser['phone'] ?? null,
+                'orcid_id' => $targetUser['orcid_id'] ?? null,
+            ]);
+
+            $pdo->prepare(
                 'INSERT INTO reviewer_profiles (reviewer_id, expertise_area, reviewer_rating, total_reviews, availability_status)
-                 VALUES (:reviewer_id, :expertise_area, 0.00, 0, :availability_status)
+                 VALUES (:reviewer_id, :expertise_area, 0.00, 0, "available")
                  ON DUPLICATE KEY UPDATE availability_status = VALUES(availability_status)'
             )->execute([
                 'reviewer_id' => $targetUserId,
                 'expertise_area' => 'Reviewer expertise pending update',
-                'availability_status' => 'available',
             ]);
         }
     } else if (jasti_is_editor_workspace_role($roleName)) {
         if ($skipOnboarding) {
+            $editorTypeRoles = [
+                'editor' => 'editor',
+                'managing_editor' => 'managing_editor',
+                'section_editor' => 'section_editor',
+                'technical_editor' => 'technical_editor',
+                'advisory_board' => 'advisory_board',
+                'editor_in_chief' => 'editor_in_chief',
+            ];
+            $editorTypeKey = $editorTypeRoles[$roleName] ?? 'editor';
+            $stmt = $pdo->prepare('SELECT editor_type_id FROM editor_types WHERE role_key = :role_key LIMIT 1');
+            $stmt->execute(['role_key' => $editorTypeKey]);
+            $editorTypeId = (int) ($stmt->fetchColumn() ?: 1);
+
             $pdo->prepare(
-                'INSERT INTO editor_profiles (user_id, status, application_completed, cv_path)
-                 VALUES (:user_id, "active", 1, "")
-                 ON DUPLICATE KEY UPDATE status = "active", application_completed = 1'
+                'INSERT INTO editor_profiles (user_id, status, editor_type_id)
+                 VALUES (:user_id, "active", :editor_type_id)
+                 ON DUPLICATE KEY UPDATE status = "active"'
             )->execute([
                 'user_id' => $targetUserId,
+                'editor_type_id' => $editorTypeId,
             ]);
 
             $pdo->prepare(
-                'INSERT INTO editors (editor_id, user_id, status, application_completed)
-                 VALUES (:editor_id, :user_id, "approved", 1)
+                'INSERT INTO editors (user_id, status, application_completed, first_name, last_name, email)
+                 VALUES (:user_id, "approved", 1, :first_name, :last_name, :email)
                  ON DUPLICATE KEY UPDATE status = "approved", application_completed = 1'
             )->execute([
-                'editor_id' => $targetUserId,
                 'user_id' => $targetUserId,
+                'first_name' => $userFirstName,
+                'last_name' => $userLastName,
+                'email' => $userEmail,
             ]);
         }
     }
-}
 
 jasti_log($pdo, $userId, 'updated user access', 'users', $targetUserId);
 jasti_json(['message' => 'User updated successfully.', 'users' => jasti_users_with_roles($pdo)]);
