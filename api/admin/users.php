@@ -5,13 +5,14 @@ require_once __DIR__ . '/../support/bootstrap.php';
 jasti_bootstrap();
 jasti_require_method('POST');
 
-$pdo = jasti_db();
-$user = jasti_require_role($pdo, 'admin');
-$userId = (int) $user['user_id'];
-$data = jasti_request_data();
-$allowedAccountRoles = ['author', 'reviewer', 'editor', 'managing_editor', 'section_editor', 'technical_editor', 'advisory_board', 'editor_in_chief', 'admin'];
+try {
+    $pdo = jasti_db();
+    $user = jasti_require_role($pdo, 'admin');
+    $userId = (int) $user['user_id'];
+    $data = jasti_request_data();
+    $allowedAccountRoles = ['author', 'reviewer', 'editor', 'managing_editor', 'section_editor', 'technical_editor', 'advisory_board', 'editor_in_chief', 'admin'];
 
-if (($data['action'] ?? '') === 'create') {
+    if (($data['action'] ?? '') === 'create') {
     $firstName = trim((string) ($data['first_name'] ?? ''));
     $lastName = trim((string) ($data['last_name'] ?? ''));
     $email = strtolower(trim((string) ($data['email'] ?? '')));
@@ -414,5 +415,13 @@ if (!empty($data['role'])) {
         }
     }
 
-jasti_log($pdo, $userId, 'updated user access', 'users', $targetUserId);
-jasti_json(['message' => 'User updated successfully.', 'users' => jasti_users_with_roles($pdo)]);
+    jasti_log($pdo, $userId, 'updated user access', 'users', $targetUserId);
+    jasti_json(['message' => 'User updated successfully.', 'users' => jasti_users_with_roles($pdo)]);
+} catch (Throwable $e) {
+    jasti_json([
+        'message' => 'Internal server error occurred.',
+        'error' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine()
+    ], 500);
+}
