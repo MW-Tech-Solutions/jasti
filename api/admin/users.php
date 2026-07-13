@@ -380,18 +380,18 @@ if (!empty($data['role'])) {
         }
     } else if (jasti_is_editor_workspace_role($roleName)) {
         if ($skipOnboarding) {
-            $editorTypeRoles = [
-                'editor' => 'editor',
-                'managing_editor' => 'managing_editor',
-                'section_editor' => 'section_editor',
-                'technical_editor' => 'technical_editor',
-                'advisory_board' => 'advisory_board',
-                'editor_in_chief' => 'editor_in_chief',
-            ];
-            $editorTypeKey = $editorTypeRoles[$roleName] ?? 'editor';
-            $stmt = $pdo->prepare('SELECT editor_type_id FROM editor_types WHERE role_key = :role_key LIMIT 1');
-            $stmt->execute(['role_key' => $editorTypeKey]);
-            $editorTypeId = (int) ($stmt->fetchColumn() ?: 1);
+            $etName = $roleName === 'editor' ? 'editorial_board' : $roleName;
+            $et = jasti_editor_type_by_name($pdo, $etName);
+            if (!$et) {
+                $et = jasti_editor_type_by_name($pdo, 'editorial_board');
+            }
+            if (!$et) {
+                $etList = jasti_editor_types($pdo);
+                if (!empty($etList)) {
+                    $et = $etList[0];
+                }
+            }
+            $editorTypeId = $et ? (int) $et['editor_type_id'] : 1;
 
             $pdo->prepare(
                 'INSERT INTO editor_profiles (user_id, status, editor_type_id)
