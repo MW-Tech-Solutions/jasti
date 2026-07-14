@@ -250,14 +250,68 @@ if (($data['action'] ?? '') === 'delete') {
         jasti_json(['message' => 'You cannot delete your own account.'], 422);
     }
 
+    $pdo->beginTransaction();
     try {
+        // Disable foreign key checks
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
+
+        // 1. Archive published articles authored by this user
+        $pdo->prepare(
+            'UPDATE articles 
+             SET archived = 1, archived_at = CURRENT_TIMESTAMP, archived_by = :admin_id 
+             WHERE manuscript_id IN (SELECT manuscript_id FROM manuscripts WHERE corresponding_author_id = :user_id)'
+        )->execute([
+            'admin_id' => $userId,
+            'user_id' => $targetUserId
+        ]);
+
+        // 2. Set manuscript author and editor fields to NULL (nullable)
+        $pdo->prepare('UPDATE manuscripts SET corresponding_author_id = NULL WHERE corresponding_author_id = :user_id')->execute(['user_id' => $targetUserId]);
+        $pdo->prepare('UPDATE manuscripts SET current_editor_id = NULL WHERE current_editor_id = :user_id')->execute(['user_id' => $targetUserId]);
+
+        // 3. Clear review invitations reference
+        $pdo->prepare('UPDATE review_invitations SET invited_by_editor = NULL WHERE invited_by_editor = :user_id')->execute(['user_id' => $targetUserId]);
+
+        // 4. Delete user\'s role mapping
+        $pdo->prepare('DELETE FROM user_roles WHERE user_id = :user_id')->execute(['user_id' => $targetUserId]);
+
+        // 5. Delete user\'s reviewer profiles and applications
+        $pdo->prepare('DELETE FROM reviewer_profiles WHERE reviewer_id = :user_id')->execute(['user_id' => $targetUserId]);
+        $pdo->prepare('DELETE FROM reviewers WHERE user_id = :user_id')->execute(['user_id' => $targetUserId]);
+
+        // 6. Delete user\'s editor profiles and applications
+        $pdo->prepare('DELETE FROM editor_profiles WHERE user_id = :user_id')->execute(['user_id' => $targetUserId]);
+        $pdo->prepare('DELETE FROM editors WHERE user_id = :user_id')->execute(['user_id' => $targetUserId]);
+
+        // 7. Delete editor assignments
+        $pdo->prepare('DELETE FROM editor_assignments WHERE editor_id = :user_id')->execute(['user_id' => $targetUserId]);
+
+        // 8. Delete review records and invitations
+        $pdo->prepare('DELETE FROM review_invitations WHERE reviewer_id = :user_id')->execute(['user_id' => $targetUserId]);
+        $pdo->prepare('DELETE FROM reviews WHERE reviewer_id = :user_id')->execute(['user_id' => $targetUserId]);
+
+        // 9. Delete messages
+        $pdo->prepare('DELETE FROM messages WHERE sender_id = :user_id OR receiver_id = :user_id')->execute(['user_id' => $targetUserId]);
+
+        // 10. Delete copyright forms and payment records
+        $pdo->prepare('DELETE FROM copyright_forms WHERE author_id = :user_id')->execute(['user_id' => $targetUserId]);
+        $pdo->prepare('DELETE FROM manuscript_payments WHERE author_id = :user_id')->execute(['user_id' => $targetUserId]);
+
+        // 11. Finally delete the user account
         $pdo->prepare('DELETE FROM users WHERE user_id = :user_id')->execute(['user_id' => $targetUserId]);
+
+        // Re-enable foreign key checks
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+
+        $pdo->commit();
     } catch (Throwable $exception) {
-        jasti_json(['message' => 'This user cannot be deleted because related journal records still exist.'], 409);
+        $pdo->rollBack();
+        $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+        jasti_json(['message' => 'Unable to delete user and clean up records: ' . $exception->getMessage()], 500);
     }
 
-    jasti_log($pdo, $userId, 'deleted user', 'users', $targetUserId);
-    jasti_json(['message' => 'User deleted successfully.', 'users' => jasti_users_with_roles($pdo)]);
+    jasti_log($pdo, $userId, 'deleted user and archived records', 'users', $targetUserId);
+    jasti_json(['message' => 'User and all related records deleted, and publications archived successfully.', 'users' => jasti_users_with_roles($pdo)]);
 }
 
 $targetUserId = (int) ($data['user_id'] ?? 0);

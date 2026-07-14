@@ -189,7 +189,7 @@ if ($action === 'submit_screening') {
 }
 
 if ($action === 'editor_decision') {
-    if (!jasti_has_editor_workspace_role($roles) || in_array('technical_editor', $roles, true)) {
+    if (!jasti_has_editor_workspace_role($roles) || (in_array('technical_editor', $roles, true) && count(array_intersect($roles, ['editor', 'managing_editor', 'section_editor', 'advisory_board'])) === 0)) {
         jasti_json(['message' => 'Only editors can approve or reject technical screening output.'], 403);
     }
 
