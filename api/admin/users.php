@@ -291,7 +291,10 @@ if (($data['action'] ?? '') === 'delete') {
         $pdo->prepare('DELETE FROM reviews WHERE reviewer_id = :user_id')->execute(['user_id' => $targetUserId]);
 
         // 9. Delete messages
-        $pdo->prepare('DELETE FROM messages WHERE sender_id = :user_id OR receiver_id = :user_id')->execute(['user_id' => $targetUserId]);
+        $pdo->prepare('DELETE FROM messages WHERE sender_id = :sender_id OR receiver_id = :receiver_id')->execute([
+            'sender_id' => $targetUserId,
+            'receiver_id' => $targetUserId
+        ]);
 
         // 10. Delete copyright forms and payment records
         $pdo->prepare('DELETE FROM copyright_forms WHERE author_id = :user_id')->execute(['user_id' => $targetUserId]);
